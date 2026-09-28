@@ -10,13 +10,14 @@ cubes and higher dimensions, and what the average solution looks like on large b
 
 ## How it was made
 
-The ideas were bounced back and forth with Claude, Anthropic's AI assistant, over many sessions. Most
-questions started from a picture or hunch: rotating boards, wrapping them into doughnuts, stacking them
-into cubes, looking at them as waves. Claude turned them into precise questions, wrote the scripts, ran
-the searches and SAT proofs, looked up the literature, and wrote these notes. Claude also pushed back
-when an idea did not hold up. Several findings turned out to be known results. A few claims were wrong
-at first and were corrected, and the corrections are noted where they matter. Before publishing, the
-scripts were rerun from a clean copy and the results compared with the notes.
+The ideas were bounced back and forth with Claude, Anthropic's AI assistant, over many sessions. The
+author's part was a visual approach to problem solving: suggesting how to think about the puzzle, such
+as rotating boards, wrapping them into doughnuts, stacking them into cubes, or seeing them as waves.
+Claude turned those ways of seeing into precise questions, wrote and ran the scripts and SAT proofs,
+looked up the literature, pushed back on ideas that did not hold up, corrected mistakes, and wrote these
+notes. Several findings turned out to be known results. A few claims were wrong at first and were
+corrected, and the corrections are noted where they matter. Before publishing, the scripts were rerun
+from a clean copy and the results compared with the notes.
 
 ## How to read the claims
 
