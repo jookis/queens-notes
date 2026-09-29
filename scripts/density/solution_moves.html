@@ -1,0 +1,466 @@
+<title>Queen Move Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the lab-notebook tool from the solution plane page. Controls, a figure strip, then the map and the path side by side. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #fcfcfb;
+  --ink: #111418;
+  --ink-2: #4f5561;
+  --ink-3: #7c8390;
+  --rule: #dde2ea;
+  --cell-a: #e6ebf2;
+  --cell-b: #f6f8fb;
+  --div-lo: #1c5cab;   /* less than the average square */
+  --div-mid: #f0efec;  /* the average square */
+  --div-hi: #d03c3b;   /* more than the average square */
+  --moved: #eb6834;
+  --ghost: #9aa1ad;
+  --accent: #2a78d6;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+    --cell-a: #2a2f37; --cell-b: #1f2329; --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
+    --moved: #d95926; --ghost: #6f7682; --accent: #3987e5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+  --cell-a: #2a2f37; --cell-b: #1f2329; --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
+  --moved: #d95926; --ghost: #6f7682; --accent: #3987e5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.55 var(--font-body);
+  margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+}
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 68ch; }
+.eyebrow { font: 500 0.7rem/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); vertical-align: middle; }
+.seg button {
+  font: 500 0.85rem/1 var(--font-data); color: var(--ink-2); background: none; border: 0;
+  padding: 9px 14px; cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl-label { font-size: 0.85rem; color: var(--ink-2); margin-right: 8px; }
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.fig { background: var(--surface); padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.fig .k { font-size: 0.8rem; color: var(--ink-2); }
+.fig .v { font: 500 1.35rem/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.fig .r { font: 400 0.78rem/1.3 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel h2 { font-size: 1.05rem; margin: 0; }
+.panel .sub { margin: 0; color: var(--ink-2); font-size: 0.88rem; }
+.board { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1; justify-self: center; }
+.board canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.scale { display: grid; gap: 4px; max-width: 440px; width: 100%; justify-self: center; }
+.scale .bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-lo), var(--div-mid), var(--div-hi)); border: 1px solid var(--rule); }
+.scale .ends { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-2); }
+.scale .ticks { display: flex; justify-content: space-between; font: 400 0.72rem/1 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.btn {
+  font: 500 0.82rem/1 var(--font-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn:disabled { color: var(--ink-3); cursor: default; border-color: var(--rule); }
+.step-text { font: 400 0.85rem/1.4 var(--font-data); color: var(--ink-2); min-height: 2.8em; white-space: pre-line; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.num { font: 400 0.85rem/1 var(--font-data); width: 6.5em; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--ink-2); }
+.key svg { vertical-align: -2px; margin-right: 5px; }
+
+.tip {
+  position: fixed; z-index: 5; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; box-shadow: 0 6px 24px rgba(0,0,0,.14);
+  font: 400 0.78rem/1.45 var(--font-data); font-variant-numeric: tabular-nums; max-width: 260px;
+}
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notes section { min-width: 0; }
+.notes h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--ink-2); font-size: 0.92rem; max-width: 62ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+.status { color: var(--ink-2); }
+
+@media (max-width: 760px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panels, .notes { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Queen puzzle notes · density maps</p>
+    <h1>The web of small moves</h1>
+    <p class="lede">A move rearranges a few queens of a solution so that it is again a solution. Turning or mirroring the
+      board does not count. The map shows which queens can move. The path shows how one solution turns into another,
+      one move at a time.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label" id="n-label">Board size</span><span class="seg" id="sizes" role="group" aria-labelledby="n-label"></span></div>
+    <div><span class="ctl-label" id="k-label">Moves of up to</span><span class="seg" id="ks" role="group" aria-labelledby="k-label">
+      <button type="button" data-k="2" aria-pressed="false">2 queens</button><button type="button" data-k="3" aria-pressed="false">3 queens</button><button type="button" data-k="4" aria-pressed="true">4 queens</button>
+    </span></div>
+  </div>
+
+  <div class="figures" id="figures" aria-live="polite"></div>
+
+  <div class="panels">
+    <section class="panel" aria-labelledby="map-title">
+      <h2 id="map-title">Flexibility map</h2>
+      <p class="sub" id="map-sub"></p>
+      <div class="row">
+        <span class="seg" id="mapmode" role="group" aria-label="Map shown">
+          <button type="button" data-m="flex" aria-pressed="true">Can move</button><button type="button" data-m="density" aria-pressed="false">Plain density</button>
+        </span>
+      </div>
+      <div class="board"><canvas id="map" aria-label="Flexibility map"></canvas></div>
+      <div class="scale"><div class="bar"></div><div class="ticks" id="ticks"></div><div class="ends" id="ends"></div></div>
+    </section>
+
+    <section class="panel" aria-labelledby="path-title">
+      <h2 id="path-title">Path between two solutions</h2>
+      <p class="sub">Shortest chain of moves. Solutions are numbered in the order the search finds them, starting at 1.</p>
+      <div class="row">
+        <label for="from" class="ctl-label">From</label><input class="num" id="from" type="number" min="1">
+        <label for="to" class="ctl-label">to</label><input class="num" id="to" type="number" min="1">
+        <button type="button" class="btn" id="go">Find path</button>
+      </div>
+      <div class="row">
+        <button type="button" class="btn" id="far">Far-apart pair</button>
+        <button type="button" class="btn" id="rand">Random pair</button>
+      </div>
+      <div class="board"><canvas id="pboard" aria-label="Board at the current step of the path"></canvas></div>
+      <div class="row">
+        <button type="button" class="btn" id="prev" aria-label="Previous step">← Back</button>
+        <button type="button" class="btn" id="next" aria-label="Next step">Next →</button>
+        <button type="button" class="btn" id="play">Play</button>
+      </div>
+      <input type="range" id="step" min="0" max="0" value="0" aria-label="Step along the path">
+      <div class="step-text" id="step-text" aria-live="polite"></div>
+      <div class="key">
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--ink)"/></svg>Queen that stays</span>
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--moved)"/></svg>Queen after this move</span>
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--ghost)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>Where it was</span>
+      </div>
+    </section>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <div class="notes">
+    <section>
+      <h3>Edge queens move more</h3>
+      <p>With swaps only, a queen on the border can move in 1.3 to 4.4 times as many solutions as a queen inside,
+        and about 1.5 times with moves of up to 3 queens. Once 4-queen moves are allowed, almost every queen can
+        move and the difference nearly goes away.</p>
+    </section>
+    <section>
+      <h3>The web joins up at four queens</h3>
+      <p>With moves of up to 3 queens, the solutions split into thousands of small islands. With 4-queen moves, almost all
+        of them join one group: 13,800 of 14,200 at n = 12. The joining moves are about half two swaps at once and half
+        rotations of four queens.</p>
+    </section>
+    <section>
+      <h3>What a move is</h3>
+      <p>Two solutions are linked when they differ in exactly k rows. The queens in those rows trade columns. The search
+        finds every such pair for k = 2, 3 and 4.</p>
+    </section>
+    <section>
+      <h3>Source</h3>
+      <p><code>scripts/density/solution_moves.py</code> writes the data. The notes are in
+        <code>docs/5-density-maps.md</code>. Single run, not yet repeated.</p>
+    </section>
+  </div>
+</main>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+  let DATA = null, n = 12, k = 4, mode = "flex", path = [], step = 0, adj = null, timer = null;
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const hex = h => { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const fmt = v => v.toLocaleString();
+
+  function setup(c) {
+    const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    return { g, w: r.width };
+  }
+
+  // ---------- map ----------
+  function mapValues() {
+    const e = DATA[n];
+    return mode === "flex" ? e.flex[k] : e.density;
+  }
+
+  function drawMap() {
+    const { g, w } = setup($("map")), cell = w / n, vals = mapValues();
+    // colour by ratio to the average square, on a log scale stretched to this map's own range
+    let sum = 0;
+    for (const row of vals) for (const v of row) sum += v;
+    const mean = sum / (n * n);
+    let span = 0;
+    for (const row of vals) for (const v of row) span = Math.max(span, Math.abs(Math.log(Math.max(v, mean / 10) / mean)));
+    span = Math.max(span, 0.05);
+    const lo = hex(css("--div-lo")), mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
+    const colour = t => {
+      const end = t < 0 ? lo : hi, u = Math.abs(t);
+      return mid.map((x, i) => Math.round(x + (end[i] - x) * u));
+    };
+    const light = hex(css("--surface")), dark = hex(css("--ink"));
+    const lum = c => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    g.fillStyle = css("--surface"); g.fillRect(0, 0, w, w);
+    const showText = cell >= 26;
+    g.font = `500 ${Math.max(8, Math.min(12, cell * 0.3))}px ${css("--font-data")}`;
+    g.textAlign = "center"; g.textBaseline = "middle";
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const v = vals[r][c], t = Math.max(-1, Math.min(1, Math.log(Math.max(v, mean / 10) / mean) / span));
+      const col = colour(t);
+      g.fillStyle = `rgb(${col.join(",")})`;
+      g.fillRect(c * cell + 1, r * cell + 1, cell - 2, cell - 2);
+      if (showText) {
+        const txt = mode === "flex" ? String(Math.round(100 * v)) : v.toFixed(1);
+        const ink = Math.abs(lum(col) - lum(dark)) > Math.abs(lum(col) - lum(light)) ? dark : light;
+        g.fillStyle = `rgb(${ink.join(",")})`;
+        g.fillText(txt, (c + .5) * cell, (r + .5) * cell + 0.5);
+      }
+    }
+    const f = mode === "flex" ? v => Math.round(100 * v) + "%" : v => v.toFixed(2) + "×";
+    $("ticks").innerHTML = [mean * Math.exp(-span), mean, mean * Math.exp(span)].map(v => `<span>${f(v)}</span>`).join("");
+    $("ends").innerHTML = mode === "flex"
+      ? "<span>moves less often than average</span><span>moves more often</span>"
+      : "<span>fewer queens than average</span><span>more queens</span>";
+    $("map-sub").textContent = mode === "flex"
+      ? `Of the solutions with a queen on a square, the percentage in which that queen can take part in a move of up to ${k} queens. Grey is the average square (${Math.round(100 * mean)}%).`
+      : "How often each square holds a queen, relative to the average square (1.0). Shown for comparison.";
+  }
+
+  function mapHover(ev) {
+    const r = $("map").getBoundingClientRect(), cell = r.width / n;
+    const c = Math.floor((ev.clientX - r.left) / cell), row = Math.floor((ev.clientY - r.top) / cell);
+    const tip = $("tip");
+    if (c < 0 || c >= n || row < 0 || row >= n) { tip.hidden = true; return; }
+    const e = DATA[n];
+    tip.textContent = `Row ${row + 1}, column ${c + 1}\ncan move: ${Math.round(100 * e.flex[k][row][c])}% (up to ${k} queens)\ndensity: ${e.density[row][c].toFixed(2)}× average`;
+    tip.style.whiteSpace = "pre";
+    place(tip, ev);
+  }
+
+  function place(tip, ev) {
+    tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = ev.clientX + 14, y = ev.clientY + 14;
+    if (x + tw > innerWidth - 8) x = ev.clientX - tw - 14;
+    if (y + th > innerHeight - 8) y = ev.clientY - th - 14;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  }
+
+  // ---------- path ----------
+  function buildAdj() {
+    const e = DATA[n], Q = e.solutions.length;
+    adj = Array.from({ length: Q }, () => []);
+    for (let m = 2; m <= k; m++) {
+      const E = e.edges[m];
+      for (let i = 0; i < E.length; i += 2) { adj[E[i]].push(E[i + 1]); adj[E[i + 1]].push(E[i]); }
+    }
+  }
+
+  function shortest(a, b) {
+    const prev = new Int32Array(adj.length).fill(-2); prev[a] = -1;
+    const q = [a];
+    for (let h = 0; h < q.length; h++) {
+      const x = q[h];
+      if (x === b) break;
+      for (const y of adj[x]) if (prev[y] === -2) { prev[y] = x; q.push(y); }
+    }
+    if (prev[b] === -2) return null;
+    const p = [b];
+    while (prev[p[p.length - 1]] !== -1) p.push(prev[p[p.length - 1]]);
+    return p.reverse();
+  }
+
+  const board = i => Array.from(DATA[n].solutions[i], ch => parseInt(ch, 16));
+
+  function describe(before, after) {
+    const rows = [];
+    for (let r = 0; r < n; r++) if (before[r] !== after[r]) rows.push(r);
+    if (rows.length === 2) return `swap the queens in rows ${rows[0] + 1} and ${rows[1] + 1}`;
+    let len = 1, x = before[rows[0]];
+    const map = new Map(rows.map(r => [before[r], after[r]]));
+    while (map.get(x) !== before[rows[0]]) { x = map.get(x); len++; }
+    const list = rows.map(r => r + 1).join(", ");
+    if (rows.length === 3) return `rotate the queens in rows ${list}`;
+    return len === 4 ? `rotate the four queens in rows ${list}` : `two swaps at once, rows ${list}`;
+  }
+
+  function drawPath() {
+    const { g, w } = setup($("pboard")), cell = w / n;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      g.fillStyle = (r + c) % 2 ? css("--cell-a") : css("--cell-b");
+      g.fillRect(c * cell, r * cell, cell, cell);
+    }
+    const text = $("step-text");
+    if (!path.length) { text.textContent = ""; return; }
+    const cur = board(path[step]), before = step > 0 ? board(path[step - 1]) : null;
+    const rad = cell * 0.3;
+    if (before) {
+      g.setLineDash([3, 3]); g.lineWidth = 1.5; g.strokeStyle = css("--ghost");
+      for (let r = 0; r < n; r++) if (before[r] !== cur[r]) {
+        g.beginPath(); g.arc((before[r] + .5) * cell, (r + .5) * cell, rad, 0, 7); g.stroke();
+      }
+      g.setLineDash([]); g.strokeStyle = css("--moved"); g.lineWidth = 2;
+      for (let r = 0; r < n; r++) if (before[r] !== cur[r]) {
+        const x0 = (before[r] + .5) * cell, x1 = (cur[r] + .5) * cell, y = (r + .5) * cell;
+        const dir = Math.sign(x1 - x0), s = x0 + dir * (rad + 3), t = x1 - dir * (rad + 3);
+        if (Math.abs(t - s) > 4) {
+          g.beginPath(); g.moveTo(s, y); g.lineTo(t, y); g.stroke();
+          g.beginPath(); g.moveTo(t, y); g.lineTo(t - dir * 6, y - 4); g.lineTo(t - dir * 6, y + 4); g.closePath();
+          g.fillStyle = css("--moved"); g.fill();
+        }
+      }
+    }
+    for (let r = 0; r < n; r++) {
+      g.beginPath(); g.arc((cur[r] + .5) * cell, (r + .5) * cell, rad, 0, 7);
+      g.fillStyle = before && before[r] !== cur[r] ? css("--moved") : css("--ink"); g.fill();
+    }
+    const last = path.length - 1;
+    const head = `Step ${step} of ${last} · solution ${path[step] + 1}`;
+    text.textContent = step === 0
+      ? `${head}\nStart. ${last} move${last === 1 ? "" : "s"} to reach solution ${path[last] + 1}.`
+      : `${head}\n${describe(before, cur)[0].toUpperCase() + describe(before, cur).slice(1)}.`;
+    $("prev").disabled = step === 0; $("next").disabled = step === last;
+  }
+
+  function setPath(a, b) {
+    stop();
+    const Q = DATA[n].solutions.length;
+    $("from").value = a + 1; $("to").value = b + 1;
+    const p = shortest(a, b);
+    if (!p) {
+      path = [a]; step = 0; drawPath();
+      $("step-text").textContent = `Solutions ${a + 1} and ${b + 1} are in different groups when moves are limited to ${k} queens. Try 4 queens or another pair.`;
+      $("step").max = 0; $("prev").disabled = $("next").disabled = true;
+      return;
+    }
+    path = p; step = 0;
+    $("step").max = path.length - 1; $("step").value = 0;
+    drawPath();
+  }
+
+  function farPair() {
+    const p = DATA[n].path;
+    setPath(p[0], p[p.length - 1]);
+  }
+
+  function randomPair() {
+    const Q = DATA[n].solutions.length;
+    for (let tries = 0; tries < 200; tries++) {
+      const a = Math.floor(Math.random() * Q), b = Math.floor(Math.random() * Q);
+      if (a !== b && shortest(a, b)) return setPath(a, b);
+    }
+    setPath(0, 1);
+  }
+
+  function go(to) { stop(); step = Math.max(0, Math.min(path.length - 1, to)); $("step").value = step; drawPath(); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "Play"; } }
+  function play() {
+    if (timer) return stop();
+    if (step >= path.length - 1) step = -1;
+    $("play").textContent = "Pause";
+    timer = setInterval(() => {
+      if (step >= path.length - 1) return stop();
+      step++; $("step").value = step; drawPath();
+    }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 1600 : 900);
+  }
+
+  // ---------- figures and state ----------
+  function figures() {
+    const e = DATA[n], g = e.groups[k], Q = e.solutions.length, f = e.flex[k];
+    let bs = 0, bc = 0, is = 0, ic = 0;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (r === 0 || c === 0 || r === n - 1 || c === n - 1) { bs += f[r][c]; bc++; } else { is += f[r][c]; ic++; }
+    }
+    const items = [
+      ["Solutions", fmt(Q), `${fmt(e.edges[2].length / 2)} / ${fmt(e.edges[3].length / 2)} / ${fmt(e.edges[4].length / 2)} moves of 2 / 3 / 4`],
+      ["Largest connected group", `${fmt(g.largest)}`, `${fmt(g.groups)} groups, ${fmt(g.alone)} with no move`],
+      ["Solutions with a movable queen", Math.round(100 * e.anyMovable[k]) + "%", `moves of up to ${k} queens`],
+      ["Border vs inside", (bs / bc / (is / ic)).toFixed(2) + "×", `border ${Math.round(100 * bs / bc)}%, inside ${Math.round(100 * is / ic)}%`]
+    ];
+    $("figures").innerHTML = items.map(([a, v, r]) =>
+      `<div class="fig"><div class="k">${a}</div><div class="v">${v}</div><div class="r">${r}</div></div>`).join("");
+    $("from").max = $("to").max = Q;
+  }
+
+  function refresh(keepPair) {
+    for (const b of $("sizes").children) b.setAttribute("aria-pressed", String(+b.dataset.n === n));
+    for (const b of $("ks").children) b.setAttribute("aria-pressed", String(+b.dataset.k === k));
+    for (const b of $("mapmode").children) b.setAttribute("aria-pressed", String(b.dataset.m === mode));
+    buildAdj(); figures(); drawMap();
+    if (keepPair && path.length) setPath(+$("from").value - 1, +$("to").value - 1); else farPair();
+  }
+
+  function init(data) {
+    DATA = data;
+    const sizes = Object.keys(data).map(Number).sort((a, b) => a - b);
+    $("sizes").innerHTML = sizes.map(s => `<button type="button" data-n="${s}" aria-pressed="false">${s}×${s}</button>`).join("");
+    $("sizes").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { n = +b.dataset.n; refresh(false); } });
+    $("ks").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { k = +b.dataset.k; refresh(true); } });
+    $("mapmode").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { mode = b.dataset.m; refresh(true); } });
+    $("map").addEventListener("pointermove", mapHover);
+    $("map").addEventListener("pointerleave", () => { $("tip").hidden = true; });
+    $("go").addEventListener("click", () => {
+      const Q = DATA[n].solutions.length, a = +$("from").value - 1, b = +$("to").value - 1;
+      if (a >= 0 && b >= 0 && a < Q && b < Q) setPath(a, b);
+      else $("step-text").textContent = `Pick two solution numbers from 1 to ${fmt(Q)}.`;
+    });
+    $("far").addEventListener("click", farPair);
+    $("rand").addEventListener("click", randomPair);
+    $("prev").addEventListener("click", () => go(step - 1));
+    $("next").addEventListener("click", () => go(step + 1));
+    $("play").addEventListener("click", play);
+    $("step").addEventListener("input", ev => go(+ev.target.value));
+    n = sizes.includes(12) ? 12 : sizes[sizes.length - 1];
+    refresh(false);
+  }
+
+  const redraw = () => { if (DATA) { drawMap(); drawPath(); } };
+  new ResizeObserver(redraw).observe($("map"));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  fetch("solution_moves.json")
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      const s = $("status"); s.hidden = false;
+      s.textContent = "Could not load solution_moves.json. Run solution_moves.py, then serve this folder (python3 -m http.server) and open the page from there.";
+    });
+})();
+</script>

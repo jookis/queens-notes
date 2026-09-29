@@ -1,0 +1,52 @@
+n = 8: 92 solutions, moves of 2 / 3 / 4 queens: 8 / 32 / 128
+   up to 2:    84 groups, largest     2, alone    76
+   up to 3:    52 groups, largest     3, alone    24
+   up to 4:     5 groups, largest    84, alone     0
+   4-moves joining different 'up to 3' groups: 128 (64 two swaps, 64 rotate four)
+   solutions with at least one movable queen: up to 2 17%, up to 3 74%, up to 4 100%
+   flexibility up to 2: border 0.12, inside 0.03, ratio 4.43
+   flexibility up to 3: border 0.40, inside 0.28, ratio 1.40
+   flexibility up to 4: border 0.91, inside 0.89, ratio 1.03
+   longest shortest chain found in the largest group: 9 moves
+n = 9: 352 solutions, moves of 2 / 3 / 4 queens: 48 / 160 / 528
+   up to 2:   304 groups, largest     3, alone   264
+   up to 3:   160 groups, largest    10, alone   112
+   up to 4:    11 groups, largest   336, alone     8
+   4-moves joining different 'up to 3' groups: 440 (192 two swaps, 248 rotate four)
+   solutions with at least one movable queen: up to 2 25%, up to 3 68%, up to 4 98%
+   flexibility up to 2: border 0.08, inside 0.05, ratio 1.43
+   flexibility up to 3: border 0.38, inside 0.27, ratio 1.41
+   flexibility up to 4: border 0.88, inside 0.82, ratio 1.07
+   longest shortest chain found in the largest group: 10 moves
+n = 10: 724 solutions, moves of 2 / 3 / 4 queens: 112 / 264 / 840
+   up to 2:   612 groups, largest     3, alone   532
+   up to 3:   392 groups, largest    12, alone   248
+   up to 4:    17 groups, largest   708, alone    16
+   4-moves joining different 'up to 3' groups: 736 (360 two swaps, 376 rotate four)
+   solutions with at least one movable queen: up to 2 27%, up to 3 66%, up to 4 98%
+   flexibility up to 2: border 0.07, inside 0.06, ratio 1.29
+   flexibility up to 3: border 0.29, inside 0.20, ratio 1.43
+   flexibility up to 4: border 0.71, inside 0.69, ratio 1.04
+   longest shortest chain found in the largest group: 16 moves
+n = 11: 2680 solutions, moves of 2 / 3 / 4 queens: 552 / 728 / 2712
+   up to 2:  2128 groups, largest     6, alone  1776
+   up to 3:  1456 groups, largest    20, alone  1032
+   up to 4:   237 groups, largest  2392, alone   192
+   4-moves joining different 'up to 3' groups: 2264 (1072 two swaps, 1192 rotate four)
+   solutions with at least one movable queen: up to 2 34%, up to 3 61%, up to 4 93%
+   flexibility up to 2: border 0.13, inside 0.05, ratio 2.45
+   flexibility up to 3: border 0.29, inside 0.17, ratio 1.66
+   flexibility up to 4: border 0.66, inside 0.57, ratio 1.16
+   longest shortest chain found in the largest group: 28 moves
+n = 12: 14200 solutions, moves of 2 / 3 / 4 queens: 3424 / 6600 / 20732
+   up to 2: 10800 groups, largest    12, alone  8668
+   up to 3:  4988 groups, largest   675, alone  3292
+   up to 4:   369 groups, largest 13800, alone   344
+   4-moves joining different 'up to 3' groups: 16132 (7240 two swaps, 8892 rotate four)
+   solutions with at least one movable queen: up to 2 39%, up to 3 77%, up to 4 98%
+   flexibility up to 2: border 0.12, inside 0.06, ratio 1.88
+   flexibility up to 3: border 0.35, inside 0.24, ratio 1.46
+   flexibility up to 4: border 0.74, inside 0.67, ratio 1.12
+   longest shortest chain found in the largest group: 18 moves
+
+wrote solution_moves.json

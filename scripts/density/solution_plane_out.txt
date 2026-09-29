@@ -1,0 +1,22 @@
+ n  families   top-2 share      nearest       bimodality (axis 1, 2)
+               queens rooks   queens rooks    queens         rooks
+ 8       12    0.488  0.468     3.17   3.25   0.39 0.35      0.35 0.34
+ 9       46    0.237  0.212     3.13   4.02   0.50 0.35      0.39 0.41
+10       92    0.163  0.126     3.09   4.53   0.51 0.45      0.34 0.40
+11      341    0.085  0.062     3.12   4.98   0.46 0.41      0.34 0.38
+      12 linear families: mean distance to the others 8.33 (others among themselves 8.12); distance from the centre of the plane 1.92 vs 2.17
+12     1787    0.041  0.027     2.87   5.13   0.36 0.32      0.37 0.36
+
+The web of small moves (families = dots):
+ 8 queens  nearest at 2 / 3 / 4+ queens:    2    7    3   linked at <=4: largest group   11, alone    1   (at <=3: largest 3)
+   rooks   nearest at 2 / 3 / 4+ queens:    2    5    5   linked at <=4: largest group   12, alone    0   (at <=3: largest 4)
+ 9 queens  nearest at 2 / 3 / 4+ queens:   11   19   16   linked at <=4: largest group   43, alone    1   (at <=3: largest 10)
+   rooks   nearest at 2 / 3 / 4+ queens:    2    6   38   linked at <=4: largest group   15, alone   11   (at <=3: largest 2)
+10 queens  nearest at 2 / 3 / 4+ queens:   25   36   31   linked at <=4: largest group   90, alone    2   (at <=3: largest 7)
+   rooks   nearest at 2 / 3 / 4+ queens:    0   11   81   linked at <=4: largest group    5, alone   54   (at <=3: largest 3)
+11 queens  nearest at 2 / 3 / 4+ queens:  115   95  131   linked at <=4: largest group  302, alone   25   (at <=3: largest 20)
+   rooks   nearest at 2 / 3 / 4+ queens:    2   12  327   linked at <=4: largest group    5, alone  277   (at <=3: largest 2)
+12 queens  nearest at 2 / 3 / 4+ queens:  695  676  416   linked at <=4: largest group 1737, alone   43   (at <=3: largest 339)
+   rooks   nearest at 2 / 3 / 4+ queens:    8   30 1749   linked at <=4: largest group    5, alone 1537   (at <=3: largest 2)
+
+wrote solution_plane.json

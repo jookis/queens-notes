@@ -1,0 +1,30 @@
+n = 10: 724 solutions, 7240 queens
+   open squares per queen: corner 1.29, inside 0.94
+   moves of up to 2: movable by open squares  0:  0.0% (  1800)   1:  4.8% (  3200)   2: 12.5% (  1856)   3+: 12.5% (   384)
+      corner vs inside: 1.97x overall, 1.36x at the same number of open squares; open squares alone predict 1.34x
+   moves of up to 4: movable by open squares  0: 63.1% (  1800)   1: 68.6% (  3200)   2: 72.4% (  1856)   3+: 78.1% (   384)
+      corner vs inside: 1.18x overall, 1.16x at the same number of open squares; open squares alone predict 1.02x
+   partner test (swaps only; the rule 'both target squares open' matches every swap found):
+      return square open, per open square: corner queens 7.1%, inside queens 4.6%
+      corner vs inside: actual 1.97x; model with own open squares only 1.37x; with the return squares too 2.08x
+      where the partners sit (distance from the edge 0 / 1 / 2 / 3+): corner queens 36% 39% 18% 7%, inside queens 44% 39% 17% 0%
+n = 11: 2680 solutions, 29480 queens
+   open squares per queen: corner 1.45, inside 1.01
+   moves of up to 2: movable by open squares  0:  0.0% (  6556)   1:  6.0% ( 12492)   2: 11.3% (  8296)   3+: 22.8% (  2136)
+      corner vs inside: 3.12x overall, 2.03x at the same number of open squares; open squares alone predict 1.46x
+   moves of up to 4: movable by open squares  0: 46.8% (  6556)   1: 58.5% ( 12492)   2: 65.2% (  8296)   3+: 78.5% (  2136)
+      corner vs inside: 1.25x overall, 1.17x at the same number of open squares; open squares alone predict 1.06x
+   partner test (swaps only; the rule 'both target squares open' matches every swap found):
+      return square open, per open square: corner queens 9.2%, inside queens 4.1%
+      corner vs inside: actual 3.12x; model with own open squares only 1.42x; with the return squares too 3.09x
+      where the partners sit (distance from the edge 0 / 1 / 2 / 3+): corner queens 51% 30% 10% 9%, inside queens 62% 15% 15% 8%
+n = 12: 14200 solutions, 170400 queens
+   open squares per queen: corner 1.56, inside 1.08
+   moves of up to 2: movable by open squares  0:  0.0% ( 37572)   1:  6.7% ( 68880)   2: 11.7% ( 47380)   3+: 19.7% ( 16568)
+      corner vs inside: 2.66x overall, 1.88x at the same number of open squares; open squares alone predict 1.39x
+   moves of up to 4: movable by open squares  0: 55.4% ( 37572)   1: 67.9% ( 68880)   2: 74.5% ( 47380)   3+: 81.7% ( 16568)
+      corner vs inside: 1.25x overall, 1.18x at the same number of open squares; open squares alone predict 1.06x
+   partner test (swaps only; the rule 'both target squares open' matches every swap found):
+      return square open, per open square: corner queens 9.3%, inside queens 4.9%
+      corner vs inside: actual 2.66x; model with own open squares only 1.42x; with the return squares too 2.66x
+      where the partners sit (distance from the edge 0 / 1 / 2 / 3+): corner queens 37% 31% 19% 13%, inside queens 62% 26% 10% 3%

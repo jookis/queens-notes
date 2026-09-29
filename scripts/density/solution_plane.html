@@ -1,0 +1,368 @@
+<title>Queen Solution Plane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab-notebook tool. Controls, a queens-vs-rooks figure strip, then two square plots side by side. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #fcfcfb;
+  --ink: #111418;
+  --ink-2: #4f5561;
+  --ink-3: #7c8390;
+  --rule: #dde2ea;
+  --grid: #e9edf2;
+  --dot: #8b93a1;
+  --link: rgba(42, 120, 214, 0.28);
+  --s1: #2a78d6;   /* half-turn symmetric */
+  --s2: #eb6834;   /* quarter-turn symmetric */
+  --s3: #1baf7a;   /* linear (column = a*row + b mod n) */
+  --focus: #111418;
+  --cell-a: #e6ebf2;
+  --cell-b: #f6f8fb;
+  --queen: #111418;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0;
+    --rule: #2e333b; --grid: #24282f; --dot: #7d8594; --link: rgba(57, 135, 229, 0.34);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --focus: #f2f4f7;
+    --cell-a: #2a2f37; --cell-b: #1f2329; --queen: #f2f4f7;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0;
+  --rule: #2e333b; --grid: #24282f; --dot: #7d8594; --link: rgba(57, 135, 229, 0.34);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --focus: #f2f4f7;
+  --cell-a: #2a2f37; --cell-b: #1f2329; --queen: #f2f4f7;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.55 var(--font-body);
+  margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+}
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 68ch; }
+.eyebrow { font: 500 0.7rem/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button {
+  font: 500 0.85rem/1 var(--font-data); color: var(--ink-2); background: none; border: 0;
+  padding: 9px 14px; cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+.ctl-label { font-size: 0.85rem; color: var(--ink-2); margin-right: 8px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--ink-2); cursor: pointer; }
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.fig { background: var(--surface); padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.fig .k { font-size: 0.8rem; color: var(--ink-2); }
+.fig .v { font: 500 1.35rem/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.fig .r { font: 400 0.78rem/1.3 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.plots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+.panel h2 { font-size: 1rem; margin: 0; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.panel h2 span { font: 400 0.78rem/1.6 var(--font-data); color: var(--ink-3); }
+.plot { position: relative; width: 100%; aspect-ratio: 1; max-width: 100%; }
+.plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.axis-note { font: 400 0.72rem/1.4 var(--font-data); color: var(--ink-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.85rem; color: var(--ink-2); align-items: center; }
+.legend svg { vertical-align: -2px; margin-right: 6px; }
+
+.tip {
+  position: fixed; z-index: 5; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.14);
+  display: grid; gap: 8px; font-size: 0.82rem; max-width: 240px;
+}
+.tip .t-head { font: 500 0.75rem/1.3 var(--font-data); color: var(--ink-2); }
+.tip canvas { width: 132px; height: 132px; display: block; }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notes section { min-width: 0; }
+.notes h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--ink-2); font-size: 0.92rem; max-width: 62ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+.status { color: var(--ink-2); }
+
+@media (max-width: 760px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plots, .notes { grid-template-columns: 1fr; }
+}
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Queen puzzle notes · density maps</p>
+    <h1>One dot per solution family</h1>
+    <p class="lede">Every solution, together with its turns and mirrors, is one dot. Two dots sit close when few
+      queens differ between the boards after the best turn. Next to it are the same number of random rook placements
+      (one per row and column, diagonals ignored), laid out the same way. Hover a dot to see its board.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label" id="n-label">Board size</span><span class="seg" id="sizes" role="group" aria-labelledby="n-label"></span></div>
+    <label class="toggle"><input type="checkbox" id="show-links" checked> Draw links between families that differ in two queens</label>
+  </div>
+
+  <div class="figures" id="figures" aria-live="polite"></div>
+
+  <div class="legend" aria-label="Legend">
+    <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="var(--dot)"/></svg>No symmetry</span>
+    <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="var(--s1)"/></svg>Same after a half turn</span>
+    <span><svg width="12" height="12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" transform="rotate(45 6 6)" fill="var(--s2)"/></svg>Same after a quarter turn</span>
+    <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--s3)" stroke-width="2.5"/></svg>Linear (column = a·row + b mod n)</span>
+  </div>
+
+  <div class="plots">
+    <div class="panel">
+      <h2>Queen solutions <span id="q-count"></span></h2>
+      <div class="plot"><canvas id="q-plot" aria-label="Scatter plot of queen solution families"></canvas></div>
+      <div class="axis-note" id="q-axis"></div>
+    </div>
+    <div class="panel">
+      <h2>Random rooks, same count <span id="r-count"></span></h2>
+      <div class="plot"><canvas id="r-plot" aria-label="Scatter plot of random rook placements"></canvas></div>
+      <div class="axis-note" id="r-axis"></div>
+    </div>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <div class="notes">
+    <section>
+      <h3>What the plane shows</h3>
+      <p>No separate groups. The dots form one blob for every size, and the two plotted directions hold only a few
+        percent of the spread at n = 12. The linear families at n = 11 sit inside the blob, not apart from it.</p>
+    </section>
+    <section>
+      <h3>What the plane hides</h3>
+      <p>Up close, queen families come in chains. Many have a neighbour that differs by swapping just two queens,
+        and linking families that differ in at most four queens joins almost all of them into one web. Random rooks
+        at the same density stay isolated. The plane squeezes this web flat, so the links look like a tangle.</p>
+    </section>
+    <section>
+      <h3>How the dots are placed</h3>
+      <p>Classical multidimensional scaling of the distance "queens that differ after the best of the 8 turns and
+        mirrors". It keeps large distances and does not invent clusters, unlike t-SNE or UMAP.</p>
+    </section>
+    <section>
+      <h3>Source</h3>
+      <p><code>scripts/density/solution_plane.py</code> writes the data. The notes are in
+        <code>docs/5-density-maps.md</code>. Single run, not yet repeated.</p>
+    </section>
+  </div>
+</main>
+
+<div class="tip" id="tip" hidden>
+  <div class="t-head" id="tip-head"></div>
+  <canvas id="tip-board" width="264" height="264"></canvas>
+  <div id="tip-body"></div>
+</div>
+
+<script>
+(() => {
+  const SYM = ["No symmetry", "Same after a half turn", "Same after a quarter turn"];
+  let DATA = null, n = 12, showLinks = true, hover = null;
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  const plots = {
+    q: { canvas: $("q-plot"), pts: [], scale: null },
+    r: { canvas: $("r-plot"), pts: [], scale: null }
+  };
+
+  function setup(c) {
+    const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    return { g, w: r.width, h: r.height };
+  }
+
+  function sharedScale(w, h) {
+    const e = DATA[n];
+    const all = e.dots.map(d => [d[0], d[1]]).concat(e.rooks);
+    let m = 0;
+    for (const [x, y] of all) m = Math.max(m, Math.abs(x), Math.abs(y));
+    m = Math.ceil(m + 0.3);
+    const pad = 18, s = (Math.min(w, h) - 2 * pad) / (2 * m);
+    return { m, s, cx: w / 2, cy: h / 2 };
+  }
+
+  function drawFrame(g, w, h, sc) {
+    g.fillStyle = css("--surface"); g.fillRect(0, 0, w, h);
+    g.strokeStyle = css("--grid"); g.lineWidth = 1;
+    const step = sc.m > 6 ? 2 : 1;
+    for (let v = -sc.m; v <= sc.m; v += step) {
+      const x = sc.cx + v * sc.s, y = sc.cy - v * sc.s;
+      g.beginPath(); g.moveTo(Math.round(x) + .5, sc.cy - sc.m * sc.s); g.lineTo(Math.round(x) + .5, sc.cy + sc.m * sc.s); g.stroke();
+      g.beginPath(); g.moveTo(sc.cx - sc.m * sc.s, Math.round(y) + .5); g.lineTo(sc.cx + sc.m * sc.s, Math.round(y) + .5); g.stroke();
+    }
+    g.strokeStyle = css("--rule");
+    g.strokeRect(sc.cx - sc.m * sc.s + .5, sc.cy - sc.m * sc.s + .5, 2 * sc.m * sc.s - 1, 2 * sc.m * sc.s - 1);
+  }
+
+  function mark(g, x, y, kind, ring) {
+    if (kind.linear) {
+      g.beginPath(); g.arc(x, y, 5.5, 0, 7); g.lineWidth = 2.5; g.strokeStyle = css("--s3"); g.stroke();
+    }
+    if (kind.sym === 2) {
+      g.save(); g.translate(x, y); g.rotate(Math.PI / 4);
+      g.fillStyle = css("--s2"); g.fillRect(-4.5, -4.5, 9, 9);
+      g.lineWidth = 2; g.strokeStyle = css("--surface"); g.strokeRect(-4.5, -4.5, 9, 9); g.restore();
+    } else if (kind.sym === 1) {
+      g.beginPath(); g.arc(x, y, 4.5, 0, 7); g.fillStyle = css("--s1"); g.fill();
+      g.lineWidth = 1.5; g.strokeStyle = css("--surface"); g.stroke();
+    } else if (!kind.linear) {
+      g.beginPath(); g.arc(x, y, ring ? 3.2 : 2.6, 0, 7); g.fillStyle = css("--dot"); g.fill();
+    }
+    if (ring) {
+      g.beginPath(); g.arc(x, y, 9, 0, 7); g.lineWidth = 2; g.strokeStyle = css("--focus"); g.stroke();
+    }
+  }
+
+  function draw() {
+    if (!DATA) return;
+    const e = DATA[n];
+    for (const key of ["q", "r"]) {
+      const p = plots[key], { g, w, h } = setup(p.canvas), sc = sharedScale(w, h);
+      p.scale = sc;
+      const src = key === "q" ? e.dots : e.rooks.map(d => [d[0], d[1], 0, false, null]);
+      p.pts = src.map((d, i) => ({ i, x: sc.cx + d[0] * sc.s, y: sc.cy - d[1] * sc.s, sym: d[2], linear: d[3], board: d[4] }));
+      drawFrame(g, w, h, sc);
+      if (key === "q" && showLinks) {
+        g.strokeStyle = css("--link"); g.lineWidth = 1;
+        g.beginPath();
+        for (const [a, b] of e.twins) { g.moveTo(p.pts[a].x, p.pts[a].y); g.lineTo(p.pts[b].x, p.pts[b].y); }
+        g.stroke();
+      }
+      const hi = hover && hover.key === key ? hover.i : -1;
+      // plain dots first, then highlighted kinds on top
+      const order = p.pts.slice().sort((a, b) => (a.sym + a.linear) - (b.sym + b.linear));
+      for (const pt of order) mark(g, pt.x, pt.y, pt, false);
+      if (hi >= 0) {
+        if (key === "q") {
+          g.strokeStyle = css("--s1"); g.lineWidth = 2; g.beginPath();
+          for (const [a, b] of e.twins) {
+            if (a === hi || b === hi) { g.moveTo(p.pts[a].x, p.pts[a].y); g.lineTo(p.pts[b].x, p.pts[b].y); }
+          }
+          g.stroke();
+        }
+        mark(g, p.pts[hi].x, p.pts[hi].y, p.pts[hi], true);
+      }
+    }
+    $("q-axis").textContent = $("r-axis").textContent =
+      `Axes in queens: one grid step = ${plots.q.scale.m > 6 ? 2 : 1} queen${plots.q.scale.m > 6 ? "s" : ""} of difference. Both plots use the same scale.`;
+  }
+
+  function drawBoard(board) {
+    const c = $("tip-board"), g = c.getContext("2d"), size = c.width, cell = size / n;
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+      g.fillStyle = (r + k) % 2 ? css("--cell-a") : css("--cell-b");
+      g.fillRect(k * cell, r * cell, cell, cell);
+    }
+    g.fillStyle = css("--queen");
+    for (let r = 0; r < n; r++) {
+      const k = parseInt(board[r], 16);
+      g.beginPath(); g.arc((k + .5) * cell, (r + .5) * cell, cell * 0.3, 0, 7); g.fill();
+    }
+  }
+
+  function twinsOf(i) {
+    let c = 0;
+    for (const [a, b] of DATA[n].twins) if (a === i || b === i) c++;
+    return c;
+  }
+
+  function onMove(key, ev) {
+    const p = plots[key], r = p.canvas.getBoundingClientRect();
+    const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    let best = null, bd = 144;
+    for (const pt of p.pts) {
+      const d = (pt.x - mx) ** 2 + (pt.y - my) ** 2;
+      if (d < bd) { bd = d; best = pt; }
+    }
+    const next = best ? { key, i: best.i } : null;
+    if (JSON.stringify(next) !== JSON.stringify(hover)) { hover = next; draw(); }
+    const tip = $("tip");
+    if (!best) { tip.hidden = true; return; }
+    if (key === "q") {
+      const bits = [SYM[best.sym]];
+      if (best.linear) bits.push("linear");
+      $("tip-head").textContent = `Family ${best.i + 1} of ${DATA[n].families}`;
+      $("tip-body").textContent = `${bits.join(", ")}. Differs from ${twinsOf(best.i)} other famil${twinsOf(best.i) === 1 ? "y" : "ies"} by swapping two queens.`;
+      $("tip-board").hidden = false;
+      drawBoard(best.board);
+    } else {
+      $("tip-head").textContent = `Random rook placement ${best.i + 1}`;
+      $("tip-body").textContent = "Used only as a baseline; the boards are not stored.";
+      $("tip-board").hidden = true;
+    }
+    tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = ev.clientX + 16, y = ev.clientY + 16;
+    if (x + tw > innerWidth - 8) x = ev.clientX - tw - 16;
+    if (y + th > innerHeight - 8) y = ev.clientY - th - 16;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  }
+
+  function onLeave() { $("tip").hidden = true; if (hover) { hover = null; draw(); } }
+
+  function figures() {
+    const e = DATA[n], pct = v => (100 * v).toFixed(1) + "%";
+    const items = [
+      ["Families", e.families.toLocaleString(), `${e.twins.length.toLocaleString()} two-queen links`],
+      ["Average distance to nearest family", e.nearest.toFixed(2) + " queens", `rooks ${e.nearestRooks.toFixed(2)}`],
+      ["Largest group linked at ≤ 4 queens", `${e.web.largest4.toLocaleString()} of ${e.families.toLocaleString()}`, `rooks ${e.webRooks.largest4} of ${e.families.toLocaleString()}`],
+      ["Spread kept by the plane", pct(e.share), `rooks ${pct(e.shareRooks)}`]
+    ];
+    $("figures").innerHTML = items.map(([k, v, r]) =>
+      `<div class="fig"><div class="k">${k}</div><div class="v">${v}</div><div class="r">${r}</div></div>`).join("");
+    $("q-count").textContent = `n = ${n} · ${e.families.toLocaleString()} dots`;
+    $("r-count").textContent = `n = ${n} · ${e.rooks.length.toLocaleString()} dots`;
+  }
+
+  function select(size) {
+    n = size; hover = null;
+    for (const b of $("sizes").children) b.setAttribute("aria-pressed", String(+b.dataset.n === n));
+    figures(); draw();
+  }
+
+  function init(data) {
+    DATA = data;
+    const sizes = Object.keys(data).map(Number).sort((a, b) => a - b);
+    $("sizes").innerHTML = sizes.map(s => `<button type="button" data-n="${s}" aria-pressed="false">${s}×${s}</button>`).join("");
+    $("sizes").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) select(+b.dataset.n); });
+    for (const key of ["q", "r"]) {
+      plots[key].canvas.addEventListener("pointermove", ev => onMove(key, ev));
+      plots[key].canvas.addEventListener("pointerdown", ev => onMove(key, ev));
+      plots[key].canvas.addEventListener("pointerleave", onLeave);
+    }
+    select(sizes.includes(12) ? 12 : sizes[sizes.length - 1]);
+  }
+
+  $("show-links").addEventListener("change", ev => { showLinks = ev.target.checked; draw(); });
+  new ResizeObserver(() => draw()).observe($("q-plot"));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  fetch("solution_plane.json")
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      const s = $("status"); s.hidden = false;
+      s.textContent = "Could not load solution_plane.json. Run solution_plane.py, then serve this folder (python3 -m http.server) and open the page from there.";
+    });
+})();
+</script>
