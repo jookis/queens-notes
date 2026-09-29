@@ -56,6 +56,41 @@ size   doughnut boards   clean   not clean   non-zero frequencies per board
 This view restates the puzzle rather than solving it. It is useful for classifying solutions and for
 "no solution" arguments, not as a faster search.
 
+## Solutions on a sphere (Hopf map) **[single run]**
+
+Script: `hopf_sphere.py`, picture: `hopf_sphere.html`. Shifting a doughnut solution along the rows or
+columns gives another solution. A shift leaves the size of each wave F(u, v) unchanged and only turns
+its phase. Call a solution together with all its shifts a **kind**. At 13 the 4524 solutions fall into
+36 kinds: 10 clean (13 shifts each) and 26 not clean (169 shifts each).
+
+The Hopf map takes two complex numbers (z1, z2), scaled to length 1, to a point on an ordinary sphere
+and forgets their shared phase. The idea was to use it to fold away the shifts, so that each kind
+becomes one point.
+
+- **Two arbitrary waves do not work.** With z1 = F(1, 2) and z2 = F(1, 3) a shift turns the two phases
+  by different angles, so only some shifts are folded away. Each non-clean kind is spread over 13
+  points.
+- **A wave and its double do.** With z1 = F(w)² / n and z2 = F(2w), every shift turns both phases by the
+  same angle. Every kind lands on exactly one point (up to rounding, 10⁻¹⁵). The quantity behind it,
+  F(w)² times the conjugate of F(2w), is known in signal processing as the bispectrum, so the method is
+  not new. The sphere is a way to draw it.
+- **The kinds come apart.** With w = (1, 2), 25 kinds get a point, on 23 distinct points. Two pairs
+  share a point by coincidence of values; they are not related by any symmetry of the board. Using
+  two frequencies together, every kind that is shown gets its own point (28 of 36; with five
+  frequencies, 31 of 36).
+- **Clean kinds are mostly invisible.** A clean solution sounds on only one line of frequencies, so
+  each frequency shows at most one clean kind. A single frequency shows 24 to 26 of the 26 non-clean
+  kinds. With the five frequencies together all 26 get a point, and the 5 kinds never shown are all
+  clean.
+- **Only shifts are folded away, unless the frequency is special.** Turning, mirroring or scaling the
+  board ((r, c) → (m·r, m·c)) maps solutions to solutions and groups the 36 kinds into 7 families
+  (3 clean, 4 not clean). For w = (1, 2), (1, 3) and (1, 4) related kinds land on different points
+  (0 of 88 pairs share one). But w = (1, 5) and (2, 3) are left unchanged by a quarter turn combined
+  with a scaling, and there 7 pairs of related kinds share a point. So choosing the frequency also
+  chooses which extra symmetry is folded away.
+
+Unlike the stacked density maps, nothing is averaged here: each kind keeps its own point.
+
 ## Link to magic squares **[argument]**
 
 The grid of values (a·x + b·y + k) mod n is a Latin square. It is pandiagonal (every wrapped diagonal holds

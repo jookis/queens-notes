@@ -1,0 +1,395 @@
+<title>Doughnut Queens Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the lab-notebook tool of the density pages. Controls, a figure strip, then the sphere beside a short key. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #fcfcfb;
+  --ink: #111418;
+  --ink-2: #4f5561;
+  --ink-3: #7c8390;
+  --rule: #dde2ea;
+  --globe: #eef2f7;
+  --grid-front: rgba(79, 85, 97, 0.28);
+  --grid-back: rgba(79, 85, 97, 0.10);
+  --kind: #2a78d6;     /* not clean */
+  --clean: #eb6834;    /* clean */
+  --cell-a: #e6ebf2;
+  --cell-b: #f6f8fb;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+    --globe: #20252c; --grid-front: rgba(192, 197, 206, 0.26); --grid-back: rgba(192, 197, 206, 0.08);
+    --kind: #3987e5; --clean: #d95926; --cell-a: #2a2f37; --cell-b: #1f2329;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+  --globe: #20252c; --grid-front: rgba(192, 197, 206, 0.26); --grid-back: rgba(192, 197, 206, 0.08);
+  --kind: #3987e5; --clean: #d95926; --cell-a: #2a2f37; --cell-b: #1f2329;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.55 var(--font-body);
+  margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+}
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 68ch; }
+.eyebrow { font: 500 0.7rem/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); vertical-align: middle; }
+.seg button {
+  font: 500 0.85rem/1 var(--font-data); color: var(--ink-2); background: none; border: 0;
+  padding: 9px 14px; cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:disabled { color: var(--ink-3); cursor: default; opacity: 0.5; }
+button:focus-visible { outline: 2px solid var(--kind); outline-offset: 2px; }
+.ctl-label { font-size: 0.85rem; color: var(--ink-2); margin-right: 8px; }
+.btn {
+  font: 500 0.82rem/1 var(--font-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+.btn:hover { border-color: var(--ink-3); }
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.fig { background: var(--surface); padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.fig .k { font-size: 0.8rem; color: var(--ink-2); }
+.fig .v { font: 500 1.35rem/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.fig .r { font: 400 0.78rem/1.3 var(--font-data); color: var(--ink-3); }
+
+.stage { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.globe { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1; justify-self: center; }
+.globe canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.globe canvas.dragging { cursor: grabbing; }
+.hint { font: 400 0.75rem/1.4 var(--font-data); color: var(--ink-3); text-align: center; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; }
+
+.side h2 { font-size: 1rem; margin: 0; }
+.side p { margin: 0; color: var(--ink-2); font-size: 0.9rem; }
+.key { display: grid; gap: 8px; font-size: 0.88rem; color: var(--ink-2); }
+.key svg { vertical-align: -2px; margin-right: 8px; }
+.poles { font: 400 0.8rem/1.5 var(--font-data); color: var(--ink-2); }
+.detail { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 10px; }
+.detail .d-head { font: 500 0.8rem/1.4 var(--font-data); color: var(--ink); }
+.detail canvas { width: 156px; height: 156px; display: block; }
+.detail .d-body { font-size: 0.86rem; color: var(--ink-2); }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notes section { min-width: 0; }
+.notes h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--ink-2); font-size: 0.92rem; max-width: 62ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+.status { color: var(--ink-2); }
+
+@media (max-width: 820px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stage, .notes { grid-template-columns: 1fr; }
+}
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Queen puzzle notes · the doughnut board</p>
+    <h1>Doughnut queens on a sphere</h1>
+    <p class="lede">Every solution of the 13×13 doughnut board, together with all its shifts, is one kind. The Hopf map
+      puts two waves of a board on a sphere and forgets their shared phase. With a wave and its double, every shift
+      of a board lands on the same point, so each kind becomes one dot. Drag the sphere to turn it.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label" id="m-label">Map</span><span class="seg" id="modes" role="group" aria-labelledby="m-label">
+      <button type="button" data-mode="paired" aria-pressed="true">A wave and its double</button><button type="button" data-mode="plain" aria-pressed="false">Two unrelated waves</button>
+    </span></div>
+    <div><span class="ctl-label" id="w-label">Wave w</span><span class="seg" id="waves" role="group" aria-labelledby="w-label"></span></div>
+  </div>
+
+  <div class="figures" id="figures" aria-live="polite"></div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="globe"><canvas id="globe" aria-label="Sphere with one dot per kind of doughnut solution"></canvas></div>
+      <div class="row">
+        <button type="button" class="btn" id="spin">Pause turning</button>
+        <button type="button" class="btn" id="reset">Reset view</button>
+      </div>
+      <div class="hint">Drag to turn. Hover or tap a dot to see its board. Dots on the far side are faded.</div>
+    </div>
+
+    <aside class="panel side">
+      <h2>Key</h2>
+      <div class="key">
+        <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="var(--kind)"/></svg>Kind that is not clean (169 boards)</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--clean)" stroke-width="2.5"/></svg>Clean kind: column = a·row + k (13 boards)</span>
+      </div>
+      <p class="poles" id="poles"></p>
+      <div class="detail" id="detail">
+        <div class="d-head" id="d-head">No dot selected</div>
+        <canvas id="d-board" width="312" height="312" hidden></canvas>
+        <div class="d-body" id="d-body">Hover or tap a dot to see one board of that kind.</div>
+      </div>
+    </aside>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <div class="notes">
+    <section>
+      <h3>Why a wave and its double</h3>
+      <p>A shift turns the phase of the wave at frequency w by some angle θ, and the wave at 2w by 2θ. Squaring the first
+        also turns it by 2θ. Both now turn together, and the Hopf map forgets exactly that shared turn. With two unrelated
+        waves the angles differ, and each kind spreads over 13 points.</p>
+    </section>
+    <section>
+      <h3>What stays apart</h3>
+      <p>Two waves together already give every kind shown its own point. Boards related by a turn, mirror or scaling usually
+        land apart too, since those change the frequencies. The waves (1, 5) and (2, 3) are the exception: a quarter turn
+        with a scaling leaves them unchanged, so there some related kinds share a dot.</p>
+    </section>
+    <section>
+      <h3>Why most clean kinds are missing</h3>
+      <p>A clean board sounds on only one line of frequencies, so each wave shows at most one clean kind. All 26 kinds that
+        are not clean appear for every wave choice or nearly so.</p>
+    </section>
+    <section>
+      <h3>Source</h3>
+      <p><code>scripts/torus/hopf_sphere.py</code> writes the data. The notes are in <code>docs/2-doughnut-board.md</code>.
+        The quantity behind the dots is known in signal processing as the bispectrum. Single run, not yet repeated.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  let DATA = null, mode = "paired", wave = "1,2", yaw = 0.6, pitch = 0.35, spinning = true, pts = [], selected = null, last = 0;
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  if (reduced.matches) spinning = false;
+
+  function rotate([x, y, z]) {
+    // turn around the vertical axis (yaw), then tilt (pitch); screen: X right, Y up, Z towards the viewer
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const x1 = cy * x + sy * y, y1 = -sy * x + cy * y;
+    return [x1, cp * z - sp * y1, sp * z + cp * y1];
+  }
+
+  function currentDots() {
+    const out = [];
+    DATA.kinds.forEach((k, i) => {
+      if (mode === "paired") {
+        const p = k.paired[wave];
+        if (p) out.push({ i, p });
+      } else {
+        for (const p of k.plain) out.push({ i, p });
+      }
+    });
+    return out;
+  }
+
+  function draw() {
+    if (!DATA) return;
+    const c = $("globe"), r0 = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(r0.width * d)) { c.width = Math.round(r0.width * d); c.height = Math.round(r0.height * d); }
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    const w = r0.width, cx = w / 2, cy = w / 2, R = w / 2 - 16;
+    g.clearRect(0, 0, w, w);
+    g.fillStyle = css("--globe"); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill();
+
+    // latitude and longitude lines, every 30 degrees
+    const line = (f) => {
+      let prev = null;
+      for (let t = 0; t <= 96; t++) {
+        const q = rotate(f(t / 96)), sx = cx + R * q[0], sy = cy - R * q[1];
+        if (prev) {
+          g.strokeStyle = q[2] >= 0 && prev[2] >= 0 ? css("--grid-front") : css("--grid-back");
+          g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(sx, sy); g.stroke();
+        }
+        prev = [sx, sy, q[2]];
+      }
+    };
+    g.lineWidth = 1;
+    for (let lat = -60; lat <= 60; lat += 30) {
+      const a = lat * Math.PI / 180;
+      line(t => [Math.cos(a) * Math.cos(2 * Math.PI * t), Math.cos(a) * Math.sin(2 * Math.PI * t), Math.sin(a)]);
+    }
+    for (let lon = 0; lon < 180; lon += 30) {
+      const b = lon * Math.PI / 180;
+      line(t => [Math.cos(b) * Math.cos(2 * Math.PI * t), Math.sin(b) * Math.cos(2 * Math.PI * t), Math.sin(2 * Math.PI * t)]);
+    }
+    g.strokeStyle = css("--rule"); g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
+
+    // dots, far side first
+    pts = currentDots().map(o => {
+      const q = rotate(o.p);
+      return { ...o, x: cx + R * q[0], y: cy - R * q[1], z: q[2] };
+    }).sort((a, b) => a.z - b.z);
+    for (const o of pts) {
+      const k = DATA.kinds[o.i], front = o.z >= 0, sel = selected === o.i;
+      g.globalAlpha = front ? 1 : 0.28;
+      const rad = (front ? 5.5 : 4) * (sel ? 1.3 : 1);
+      if (k.clean) {
+        g.beginPath(); g.arc(o.x, o.y, rad, 0, 7); g.lineWidth = 2.5; g.strokeStyle = css("--clean"); g.stroke();
+      } else {
+        g.beginPath(); g.arc(o.x, o.y, rad, 0, 7); g.fillStyle = css("--kind"); g.fill();
+        g.lineWidth = 1.5; g.strokeStyle = css("--globe"); g.stroke();
+      }
+      if (sel) { g.beginPath(); g.arc(o.x, o.y, rad + 5, 0, 7); g.lineWidth = 2; g.strokeStyle = css("--ink"); g.stroke(); }
+    }
+    g.globalAlpha = 1;
+  }
+
+  function figures() {
+    const dots = currentDots();
+    const kinds = new Set(dots.map(o => o.i));
+    const keys = new Set(dots.map(o => o.p.map(v => v.toFixed(4)).join()));
+    const clean = [...kinds].filter(i => DATA.kinds[i].clean).length;
+    const items = mode === "paired" ? [
+      ["Kinds shown", `${kinds.size} of ${DATA.kinds.length}`, `${clean} clean, ${kinds.size - clean} not clean`],
+      ["Dots on the sphere", keys.size, `one dot per kind, ${kinds.size - keys.size} kinds share a dot`],
+      ["Boards behind the dots", dots.reduce((s, o) => s + DATA.kinds[o.i].size, 0).toLocaleString(), "every shift of a board on the same dot"],
+      ["Wave pair", `w = (${wave.replace(",", ", ")})`, `with 2w = (${wave.split(",").map(v => (2 * v) % DATA.n).join(", ")})`]
+    ] : [
+      ["Kinds shown", `${kinds.size} of ${DATA.kinds.length}`, `${clean} clean, ${kinds.size - clean} not clean`],
+      ["Dots on the sphere", keys.size, "most kinds spread over 13 dots"],
+      ["Waves", `(${DATA.plainPair[0].join(", ")}) and (${DATA.plainPair[1].join(", ")})`, "shifts turn them by different angles"],
+      ["What to look for", "Scatter", "hover a dot to see all dots of its kind"]
+    ];
+    $("figures").innerHTML = items.map(([k, v, r]) =>
+      `<div class="fig"><div class="k">${k}</div><div class="v">${v}</div><div class="r">${r}</div></div>`).join("");
+    const [a, b] = mode === "paired"
+      ? [`the wave (${wave.replace(",", ", ")}) squared`, `the wave (${wave.split(",").map(v => (2 * v) % DATA.n).join(", ")})`]
+      : DATA.plainPair.map(p => `the wave (${p.join(", ")})`);
+    $("poles").textContent = `Top of the sphere: only ${a} sounds. Bottom: only ${b} sounds. Around the equator: both equally loud, and the longitude is their phase difference.`;
+  }
+
+  function drawBoard(board) {
+    const c = $("d-board"), g = c.getContext("2d"), n = DATA.n, cell = c.width / n;
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+      g.fillStyle = (r + k) % 2 ? css("--cell-a") : css("--cell-b");
+      g.fillRect(k * cell, r * cell, cell, cell);
+    }
+    g.fillStyle = css("--ink");
+    for (let r = 0; r < n; r++) {
+      g.beginPath(); g.arc((parseInt(board[r], 16) + .5) * cell, (r + .5) * cell, cell * 0.3, 0, 7); g.fill();
+    }
+  }
+
+  function showDetail(i) {
+    selected = i;
+    if (i === null) {
+      $("d-head").textContent = "No dot selected"; $("d-board").hidden = true;
+      $("d-body").textContent = "Hover or tap a dot to see one board of that kind."; draw(); return;
+    }
+    const k = DATA.kinds[i];
+    $("d-head").textContent = `Kind ${i + 1} of ${DATA.kinds.length} · family ${k.family + 1} of 7`;
+    $("d-board").hidden = false; drawBoard(k.board);
+    let body = k.clean
+      ? `Clean: the queen of each row sits ${k.step} columns to the right of the one above. ${k.size} boards, all shifts of this one.`
+      : `Not clean. ${k.size} boards, all shifts of this one.`;
+    if (mode === "paired") {
+      const key = k.paired[wave].map(v => v.toFixed(4)).join();
+      const others = DATA.kinds.map((o, j) => j).filter(j => j !== i && DATA.kinds[j].paired[wave] && DATA.kinds[j].paired[wave].map(v => v.toFixed(4)).join() === key);
+      if (others.length) {
+        const fam = others.every(j => DATA.kinds[j].family === k.family);
+        body += ` Shares its dot with kind ${others.map(j => j + 1).join(", ")}${fam ? ", a turned, mirrored or scaled version of it" : ", which is not a symmetric version of it"}.`;
+      }
+    } else {
+      body += ` Under these two waves this kind covers ${k.plain.length} dot${k.plain.length === 1 ? "" : "s"}.`;
+    }
+    $("d-body").textContent = body;
+    draw();
+  }
+
+  function pick(ev) {
+    const r = $("globe").getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    let best = null, bd = 144;
+    for (const o of pts) {
+      const dd = (o.x - mx) ** 2 + (o.y - my) ** 2 - (o.z >= 0 ? 40 : 0);   // prefer the near side
+      if (dd < bd) { bd = dd; best = o; }
+    }
+    return best;
+  }
+
+  let drag = null;
+  function onDown(ev) {
+    drag = { x: ev.clientX, y: ev.clientY, yaw, pitch, moved: false };
+    $("globe").setPointerCapture(ev.pointerId);
+  }
+  function onMove(ev) {
+    if (drag) {
+      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; $("globe").classList.add("dragging"); stopSpin(); }
+      if (drag.moved) {
+        yaw = drag.yaw + dx * 0.01;
+        pitch = Math.max(-1.5, Math.min(1.5, drag.pitch + dy * 0.01));
+        draw(); return;
+      }
+    }
+    const o = pick(ev);
+    if (o && o.i !== selected) showDetail(o.i);
+  }
+  function onUp(ev) {
+    if (drag && !drag.moved) { const o = pick(ev); showDetail(o ? o.i : null); }
+    drag = null; $("globe").classList.remove("dragging");
+  }
+
+  function stopSpin() { spinning = false; $("spin").textContent = "Turn slowly"; }
+  function tick(t) {
+    if (spinning && DATA) { yaw += Math.min(50, t - last) * 0.00025; draw(); }
+    last = t; requestAnimationFrame(tick);
+  }
+
+  function refresh() {
+    for (const b of $("modes").children) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    for (const b of $("waves").children) { b.setAttribute("aria-pressed", String(b.dataset.w === wave)); b.disabled = mode === "plain"; }
+    figures();
+    showDetail(selected !== null && (mode === "plain" ? DATA.kinds[selected].plain.length : DATA.kinds[selected].paired[wave]) ? selected : null);
+  }
+
+  function init(data) {
+    DATA = data;
+    $("waves").innerHTML = data.pairs.map(p => `<button type="button" data-w="${p.join(",")}" aria-pressed="false">(${p.join(", ")})</button>`).join("");
+    $("waves").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b && !b.disabled) { wave = b.dataset.w; refresh(); } });
+    $("modes").addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { mode = b.dataset.mode; refresh(); } });
+    const c = $("globe");
+    c.addEventListener("pointerdown", onDown);
+    c.addEventListener("pointermove", onMove);
+    c.addEventListener("pointerup", onUp);
+    c.addEventListener("pointercancel", () => { drag = null; c.classList.remove("dragging"); });
+    $("spin").addEventListener("click", () => {
+      if (spinning) stopSpin(); else { spinning = true; $("spin").textContent = "Pause turning"; }
+    });
+    $("reset").addEventListener("click", () => { yaw = 0.6; pitch = 0.35; draw(); });
+    if (!spinning) $("spin").textContent = "Turn slowly";
+    refresh();
+    requestAnimationFrame(tick);
+  }
+
+  new ResizeObserver(() => draw()).observe($("globe"));
+  const redraw = () => { if (DATA) { draw(); if (selected !== null) drawBoard(DATA.kinds[selected].board); } };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  fetch("hopf_sphere.json")
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      const s = $("status"); s.hidden = false;
+      s.textContent = "Could not load hopf_sphere.json. Run hopf_sphere.py, then serve this folder (python3 -m http.server) and open the page from there.";
+    });
+})();
+</script>

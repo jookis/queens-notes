@@ -26,6 +26,7 @@ C programs: `cc -O2 -o prog prog.c`. Rust programs: `rustc -O prog.rs`.
 | `doughnut_waves.py` | all doughnut boards at 11 and 13, split into clean and not clean, with their Fourier "quiet lines" |
 | `wave.py` | Fourier picture of a clean 13-cube, and of the same cube with one square changed |
 | `wave_counts.py` | allowed wave pairs against the formula, for every n coprime to 210 up to 149 |
+| `hopf_sphere.py` | 13x13 doughnut solutions on a sphere: the Hopf map of a wave and its double, one point per solution up to shifts; writes `hopf_sphere.json` for `hopf_sphere.html` (serve the folder with `python3 -m http.server` to view) |
 
 ## cubes/ (part 3), needs python-sat
 

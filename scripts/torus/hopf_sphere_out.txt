@@ -1,0 +1,16 @@
+13 x 13 doughnut board: 4524 solutions (130 clean), 36 kinds (10 clean, 26 not clean)
+with turns, mirrors and scalings: 7 families (3 clean, 4 not clean)
+
+plain map, w1 = (1, 2), w2 = (1, 3): 28 kinds shown; points per kind: {1: 6, 13: 22}
+paired map, w = (1, 2): 25 kinds shown (1 clean); largest spread inside a kind 1.1e-15; 23 distinct points (4 kinds share one); same-family pairs on one point: 0 of 88
+paired map, w = (1, 3): 25 kinds shown (1 clean); largest spread inside a kind 1.3e-15; 23 distinct points (4 kinds share one); same-family pairs on one point: 0 of 88
+paired map, w = (1, 4): 25 kinds shown (1 clean); largest spread inside a kind 1.7e-15; 23 distinct points (4 kinds share one); same-family pairs on one point: 0 of 88
+paired map, w = (1, 5): 27 kinds shown (1 clean); largest spread inside a kind 8.9e-16; 18 distinct points (14 kinds share one); same-family pairs on one point: 7 of 93
+paired map, w = (2, 3): 27 kinds shown (1 clean); largest spread inside a kind 1.0e-15; 18 distinct points (14 kinds share one); same-family pairs on one point: 7 of 93
+
+first 2 frequencies together: 28 of 36 kinds shown, all on different points: True
+first 3 frequencies together: 29 of 36 kinds shown, all on different points: True
+first 4 frequencies together: 30 of 36 kinds shown, all on different points: True
+first 5 frequencies together: 31 of 36 kinds shown, all on different points: True
+
+wrote hopf_sphere.json
