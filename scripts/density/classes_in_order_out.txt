@@ -1,0 +1,23 @@
+n = 12: 14200 solutions in search order; class sizes [7200, 3748, 1712, 1540]
+runs: 6755 runs of the same class, average length 2.1 (shuffled: average length 1.5)
+mirror: the mirror image of solution i is solution 14201 - i for every i: True
+   same class as its mirror image: 100.0% (shuffled: 35.3%); the class list reads the same backwards at 100.0% of places
+blocks: class mix by the column of the first-row queen (class 1 .. 4)
+   column  1 (  500 solutions):  64.0%  25.2%   6.8%   4.0%
+   column  2 (  806 solutions):  46.3%  33.6%  13.0%   7.1%
+   column  3 ( 1165 solutions):  58.5%  14.6%  13.6%  13.3%
+   column  4 ( 1359 solutions):  49.2%  29.6%  11.3%   9.9%
+   column  5 ( 1631 solutions):  33.0%  37.4%  11.3%  18.3%
+   column  6 ( 1639 solutions):  62.1%  18.0%  13.5%   6.4%
+   column  7 ( 1639 solutions):  62.1%  18.0%  13.5%   6.4%
+   column  8 ( 1631 solutions):  33.0%  37.4%  11.3%  18.3%
+   column  9 ( 1359 solutions):  49.2%  29.6%  11.3%   9.9%
+   column 10 ( 1165 solutions):  58.5%  14.6%  13.6%  13.3%
+   column 11 (  806 solutions):  46.3%  33.6%  13.0%   7.1%
+   column 12 (  500 solutions):  64.0%  25.2%   6.8%   4.0%
+periods: the 3 strongest repeats along the list per class, as a multiple of the strongest repeat in
+         shuffled lists (99th percentile of 50)
+   class 1: every  7100.0 solutions (10.8x), every  4733.3 solutions ( 9.7x), every   546.2 solutions ( 3.4x)
+   class 2: every  4733.3 solutions ( 8.6x), every  7100.0 solutions ( 4.0x), every   645.5 solutions ( 3.0x)
+   class 3: every   546.2 solutions ( 4.9x), every    23.2 solutions ( 1.3x), every    25.5 solutions ( 1.3x)
+   class 4: every  7100.0 solutions ( 4.9x), every  3550.0 solutions ( 3.7x), every   405.7 solutions ( 2.9x)

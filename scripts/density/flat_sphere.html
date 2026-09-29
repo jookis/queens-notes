@@ -19,6 +19,7 @@
   --cell-a: #e6ebf2;
   --cell-b: #f6f8fb;
   --accent: #2a78d6;
+  --moved: #eb6834;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -27,7 +28,7 @@
     --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
     --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
     --grid-line: rgba(242, 244, 247, 0.16); --dot: rgba(242, 244, 247, 0.6);
-    --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5;
+    --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5; --moved: #d95926;
     color-scheme: dark;
   }
 }
@@ -35,7 +36,7 @@
   --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
   --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
   --grid-line: rgba(242, 244, 247, 0.16); --dot: rgba(242, 244, 247, 0.6);
-  --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5;
+  --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5; --moved: #d95926;
   color-scheme: dark;
 }
 
@@ -97,7 +98,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .poles { font: 400 0.8rem/1.5 var(--font-data); color: var(--ink-2); }
 .detail { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 10px; }
 .detail .d-head { font: 500 0.8rem/1.4 var(--font-data); }
-.detail canvas { width: 156px; height: 156px; display: block; }
+.detail canvas { width: 100%; max-width: 300px; aspect-ratio: 1; height: auto; display: block; }
+.pulse-key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--ink-2); }
+.pulse-key svg { vertical-align: -2px; margin-right: 5px; }
+.d-stats { font: 400 0.78rem/1.5 var(--font-data); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .detail .d-body { font-size: 0.86rem; color: var(--ink-2); }
 
 .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
@@ -119,7 +123,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <h1>A heatmap on a sphere</h1>
     <p class="lede">Each solution of the flat board gets its own spot on a sphere, placed by two of its waves: how loud each
       wave is sets the height, and their phase difference sets the longitude. The colour shows how many solutions sit in
-      each patch. Nothing is stacked on board squares. Drag to turn the sphere, and hover to see the boards at a spot.</p>
+      each patch. Pick a patch and its solutions pulse through one by one, on the board and on the sphere at the same beat.</p>
   </header>
 
   <div class="controls">
@@ -143,26 +147,37 @@ code { font-family: var(--font-data); font-size: 0.85em; }
         <button type="button" class="btn" id="spin">Pause turning</button>
         <button type="button" class="btn" id="reset">Reset view</button>
       </div>
-      <div class="hint">Drag to turn. Hover or tap to pick the nearest spot on the near side.</div>
+      <div class="hint">Drag to turn. Tap or click a patch to make it pulse.</div>
       <div class="unrolled">
         <h3>Unrolled map</h3>
         <p>The whole sphere laid flat: longitude across (0° in the middle, where the two waves are in step), height up and
-          down, so equal areas stay equal. Each spot is one square, darker red when more solutions share it.</p>
+          down, so equal areas stay equal. Each spot is one square, darker red when more solutions share it. Tap a spot to
+          pick its patch.</p>
         <div class="flatmap"><canvas id="flat" aria-label="Unrolled map of every spot on the sphere"></canvas></div>
       </div>
     </div>
 
     <aside class="panel side">
-      <h2>At this spot</h2>
+      <h2>Pulsing patch</h2>
       <p class="poles" id="poles"></p>
       <div class="detail">
-        <div class="d-head" id="d-head">No spot selected</div>
-        <canvas id="d-board" width="312" height="312" hidden></canvas>
-        <div class="d-body" id="d-body">Hover or tap the sphere to see the solutions at the nearest spot.</div>
-        <div class="row" style="justify-content: flex-start">
-          <button type="button" class="btn" id="prev-b" disabled>← Board</button>
-          <button type="button" class="btn" id="next-b" disabled>Board →</button>
+        <div class="d-head" id="d-head"></div>
+        <canvas id="d-board" width="360" height="360" aria-label="The patch's own heatmap with its solutions pulsing over it"></canvas>
+        <div class="pulse-key">
+          <span><svg width="14" height="12" aria-hidden="true"><rect x="0" y="1" width="6" height="10" fill="var(--div-lo)"/><rect x="7" y="1" width="6" height="10" fill="var(--div-hi)"/></svg>Squares: this patch's solutions use them less / more than all solutions do</span>
+          <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--ink)"/></svg>Queen</span>
+          <span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="var(--moved)"/></svg>Moved since the previous board</span>
         </div>
+        <div class="d-body" id="d-body"></div>
+        <div class="row" style="justify-content: flex-start">
+          <button type="button" class="btn" id="pulse">Pause pulse</button>
+          <button type="button" class="btn" id="prev-b" aria-label="Previous board">←</button>
+          <button type="button" class="btn" id="next-b" aria-label="Next board">→</button>
+          <span class="seg" id="speeds" role="group" aria-label="Pulse speed">
+            <button type="button" data-ms="2200" aria-pressed="false">Slow</button><button type="button" data-ms="1400" aria-pressed="true">Normal</button><button type="button" data-ms="800" aria-pressed="false">Fast</button>
+          </span>
+        </div>
+        <p class="d-stats" id="d-stats"></p>
       </div>
     </aside>
   </div>
@@ -173,31 +188,27 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     <section>
       <h3>Diagonal waves pile solutions up, in rows</h3>
       <p>With the diagonal and anti-diagonal waves, queen solutions share far fewer spots than random rook placements:
-        2,464 spots for 14,200 solutions at 12×12, with up to 168 on one spot. Their diagonal waves are also quieter. The
-        diagonal rule makes solutions alike in exactly these two waves. The spots sit on few height levels (311 against
-        7,863 for rooks), which the unrolled map shows as rows.</p>
+        2,464 spots for 14,200 solutions at 12×12, with up to 168 on one spot. The spots sit on few height levels (311
+        against 7,863 for rooks), which the unrolled map shows as rows.</p>
     </section>
     <section>
-      <h3>Other waves spread them out</h3>
-      <p>Searching all pairs of waves finds pairs that give most solutions their own spot (12,603 of 14,200 at 12×12,
-        close to random rooks). These waves have no simple meaning, so the heat is harder to read.</p>
-    </section>
-    <section>
-      <h3>Two mirror halves and a dense side</h3>
+      <h3>Two mirror halves, a dense side, a repeat</h3>
       <p>Flipping a board top to bottom swaps the two diagonal waves, so the lower half of the sphere is an exact mirror
-        image of the upper half. A ring of spots just above the equator and its mirror below meet in a figure 8. Seen from
-        the centre of the board, queen solutions lean towards the two waves being in step (longitude 0); random rooks
-        do not.</p>
+        image of the upper half. Seen from the centre of the board, queen solutions lean towards the two waves being in
+        step (longitude 0). Around the sphere the pattern repeats 6 times at 12×12 and 5 times at 10×10.</p>
     </section>
     <section>
-      <h3>Solutions with no spot</h3>
-      <p>At 11×11, 88 solutions have both diagonal waves silent and get no spot. They are exactly the doughnut solutions,
-        which have one queen on every wrapped diagonal.</p>
+      <h3>What a patch has in common</h3>
+      <p>At 12×12, two solutions from the same patch are linked by a small move (2 to 4 queens) about 10 times as often as
+        two solutions picked at random. They share a few more queens than random pairs (1.17 against 1.04), but no square
+        is used by all of them. So a patch is a loose neighbourhood of the web of small moves, not a fixed core. The pulse
+        takes the closest remaining solution each time, but most steps still change many queens.</p>
     </section>
     <section>
       <h3>Source</h3>
-      <p><code>scripts/density/flat_sphere.py</code> writes the data. The notes are in <code>docs/5-density-maps.md</code>.
-        Single run, not yet repeated.</p>
+      <p><code>scripts/density/flat_sphere.py</code> and <code>sphere_tiles.py</code>. The notes are in
+        <code>docs/5-density-maps.md</code>. Single runs, not yet repeated. At 11×11, the 88 doughnut solutions have both
+        diagonal waves silent and get no spot.</p>
     </section>
   </div>
 </main>
@@ -205,13 +216,15 @@ code { font-family: var(--font-data); font-size: 0.85em; }
 <script>
 (() => {
   const NB = 24, NL = 48;                          // equal-area patches: height bands x longitude slices
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let DATA = null, n = 12, mode = "diagonal", set = "queens", showDots = false;
-  let yaw = 0.6, pitch = 0.35, spinning = true, last = 0;
-  let spots = [], heat = null, heatSpan = 1, cellColors = null, sel = null, selBoard = 0;
+  let yaw = 0.6, pitch = 0.35, spinning = !reduced, last = 0;
+  let spots = [], tiles = new Map(), spotOf = [], heat = null, heatSpan = 1, cellColors = null, overall = null, baseShared = 0;
+  let patch = null, period = 1400, pulsing = true, beatStart = 0, heldIdx = 0, shownIdx = -1;
   const $ = id => document.getElementById(id);
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const hex = h => { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) spinning = false;
+  const mix = (a, b, u) => a.map((x, i) => x + (b[i] - x) * u);
 
   function rotate([x, y, z]) {
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -228,17 +241,20 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     const l = Math.min(NL - 1, Math.max(0, Math.floor((Math.atan2(y, x) + Math.PI) / (2 * Math.PI) * NL)));
     return b * NL + l;
   };
+  const board = i => Array.from(DATA[n].boards[i], ch => parseInt(ch, 16));
 
   // ---------- data for the current choice ----------
   function build() {
     const m = DATA[n].modes[mode];
     const byKey = new Map();
+    spotOf = [];
     if (set === "queens") {
       m.points.forEach((p, i) => {
         if (!p) return;
         const k = p.join();
         if (!byKey.has(k)) byKey.set(k, { p, boards: [] });
         byKey.get(k).boards.push(i);
+        spotOf[i] = byKey.get(k);
       });
     } else {
       for (let i = 0; i < m.rooks.length; i += 3) {
@@ -248,29 +264,90 @@ code { font-family: var(--font-data); font-size: 0.85em; }
       }
     }
     spots = [...byKey.values()];
+    tiles = new Map();
     const counts = new Float64Array(NB * NL);
     let total = 0;
-    for (const s of spots) { counts[cellOf(...s.p)] += s.boards.length; total += s.boards.length; }
+    for (const s of spots) {
+      s.tile = cellOf(...s.p);
+      counts[s.tile] += s.boards.length; total += s.boards.length;
+      if (set === "queens") {
+        if (!tiles.has(s.tile)) tiles.set(s.tile, []);
+        tiles.get(s.tile).push(...s.boards);
+      }
+    }
     const mean = total / (NB * NL);
     heat = Array.from(counts, c => Math.log(Math.max(c, mean / 10) / mean));
     heatSpan = Math.max(0.05, ...heat.map(Math.abs));
+    // overall density of each square, for the patch maps
+    overall = new Float64Array(n * n);
+    DATA[n].boards.forEach(b => { for (let r = 0; r < n; r++) overall[r * n + parseInt(b[r], 16)]++; });
+    const Q = DATA[n].boards.length;
+    baseShared = 0;
+    for (let i = 0; i < n * n; i++) baseShared += overall[i] * (overall[i] - 1);
+    baseShared /= Q * (Q - 1);                       // queens two solutions share, over all pairs
+    for (let i = 0; i < n * n; i++) overall[i] /= Q;
     colours();
-    sel = null; selBoard = 0;
+    patch = null;
+    if (set === "queens") {
+      let best = -1, bestTile = null;
+      for (const [t, b] of tiles) if (b.length > best) { best = b.length; bestTile = t; }
+      if (bestTile !== null) choosePatch(bestTile);
+    }
   }
 
   function colours() {
     const lo = hex(css("--div-lo")), mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
     cellColors = heat.map(h => {
-      const t = Math.max(-1, Math.min(1, h / heatSpan)), end = t < 0 ? lo : hi, u = Math.abs(t);
-      return mid.map((x, i) => x + (end[i] - x) * u);
+      const t = Math.max(-1, Math.min(1, h / heatSpan));
+      return mix(mid, t < 0 ? lo : hi, Math.abs(t));
     });
     const f = v => v >= 10 ? v.toFixed(0) + "×" : v >= 1 ? v.toFixed(1) + "×" : v.toFixed(2) + "×";
     $("ticks").innerHTML = [Math.exp(-heatSpan), 1, Math.exp(heatSpan)].map(v => `<span>${f(v)}</span>`).join("");
   }
 
+  // ---------- the pulsing patch ----------
+  function choosePatch(tile) {
+    const members = (tiles.get(tile) || []).slice();
+    if (!members.length) return;
+    // order the boards so each step changes as few queens as possible (greedy nearest neighbour)
+    const B = members.map(board), diff = (a, b) => { let d = 0; for (let r = 0; r < n; r++) d += a[r] !== b[r]; return d; };
+    const order = [0], used = new Uint8Array(members.length); used[0] = 1;
+    for (let s = 1; s < members.length; s++) {
+      const cur = B[order[order.length - 1]];
+      let best = -1, bd = 99;
+      for (let j = 0; j < members.length; j++) if (!used[j]) { const d = diff(cur, B[j]); if (d < bd) { bd = d; best = j; } }
+      order.push(best); used[best] = 1;
+    }
+    const ordered = order.map(j => members[j]), OB = order.map(j => B[j]);
+    // the patch's own map, and what its boards share
+    const own = new Float64Array(n * n);
+    for (const b of OB) for (let r = 0; r < n; r++) own[r * n + b[r]]++;
+    let pairsShared = 0, links = 0;
+    for (let i = 0; i < n * n; i++) pairsShared += own[i] * (own[i] - 1);
+    const m = OB.length;
+    for (let a = 0; a < m; a++) for (let b = a + 1; b < m; b++) { const d = diff(OB[a], OB[b]); if (d >= 2 && d <= 4) links++; }
+    const ratio = Array.from(own, (c, i) => (c / m) / Math.max(overall[i], 1e-9));
+    let span = 0.05;
+    for (const v of ratio) span = Math.max(span, Math.abs(Math.log(Math.max(v, 0.1))));
+    const steps = OB.slice(1).map((b, i) => diff(OB[i], b));
+    patch = { tile, boards: ordered, B: OB, ratio, span, m,
+              shared: m > 1 ? pairsShared / (m * (m - 1)) : 0, links: m > 1 ? links / (m * (m - 1) / 2) : 0,
+              small: steps.length ? steps.filter(d => d <= 4).length / steps.length : 0 };
+    beatStart = performance.now(); heldIdx = 0; shownIdx = -1;
+  }
+
+  function beat(t) {
+    if (!patch) return null;
+    if (!pulsing) return { idx: heldIdx, alpha: 1, phase: 0 };
+    // a frame's timestamp can be a little earlier than the moment the patch was chosen
+    const x = Math.max(0, (t - beatStart) / period), k = Math.floor(x), phase = x - k;
+    const alpha = reduced ? 1 : phase < 0.18 ? phase / 0.18 : phase > 0.8 ? (1 - phase) / 0.2 : 1;
+    return { idx: ((k % patch.m) + patch.m) % patch.m, alpha, phase };
+  }
+
   // ---------- drawing ----------
   let off = null;
-  function draw() {
+  function draw(t, B) {
     if (!DATA) return;
     const c = $("globe"), r0 = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
     if (c.width !== Math.round(r0.width * d)) { c.width = Math.round(r0.width * d); c.height = Math.round(r0.height * d); }
@@ -278,16 +355,18 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     const w = r0.width, R = w / 2 - 14, cx = w / 2, cy = w / 2;
     g.clearRect(0, 0, w, w);
 
-    // the heat surface, drawn per pixel at a modest resolution and scaled up
     const S = Math.min(360, Math.round(2 * R));
     if (!off || off.width !== S) { off = document.createElement("canvas"); off.width = off.height = S; }
     const og = off.getContext("2d"), img = og.createImageData(S, S), px = img.data;
+    const glowTile = patch && B ? patch.tile : -1, glow = B ? 0.25 + 0.5 * B.alpha : 0, hi = hex(css("--div-hi")), ink = hex(css("--ink"));
+    const glowCol = mix(hi, ink, 0.25);
     for (let j = 0; j < S; j++) {
       const Y = 1 - 2 * (j + 0.5) / S;
       for (let i = 0; i < S; i++) {
         const X = 2 * (i + 0.5) / S - 1, rr = X * X + Y * Y, o = 4 * (j * S + i);
         if (rr > 1) { px[o + 3] = 0; continue; }
-        const Z = Math.sqrt(1 - rr), col = cellColors[cellOf(...unrotate(X, Y, Z))], shade = 0.82 + 0.18 * Z;
+        const Z = Math.sqrt(1 - rr), cell = cellOf(...unrotate(X, Y, Z)), shade = 0.82 + 0.18 * Z;
+        const col = cell === glowTile ? mix(cellColors[cell], glowCol, glow) : cellColors[cell];
         px[o] = col[0] * shade; px[o + 1] = col[1] * shade; px[o + 2] = col[2] * shade; px[o + 3] = 255;
       }
     }
@@ -295,23 +374,22 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     g.imageSmoothingEnabled = true;
     g.drawImage(off, cx - R, cy - R, 2 * R, 2 * R);
 
-    // a light grid: the equator and a few meridians on the near side
     g.lineWidth = 1; g.strokeStyle = css("--grid-line");
     const line = f => {
       let prev = null;
-      for (let t = 0; t <= 96; t++) {
-        const q = rotate(f(t / 96)), sx = cx + R * q[0], sy = cy - R * q[1];
+      for (let s = 0; s <= 96; s++) {
+        const q = rotate(f(s / 96)), sx = cx + R * q[0], sy = cy - R * q[1];
         if (prev && q[2] >= 0 && prev[2] >= 0) { g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(sx, sy); g.stroke(); }
         prev = [sx, sy, q[2]];
       }
     };
     for (const lat of [-60, -30, 0, 30, 60]) {
       const a = lat * Math.PI / 180;
-      line(t => [Math.cos(a) * Math.cos(2 * Math.PI * t), Math.cos(a) * Math.sin(2 * Math.PI * t), Math.sin(a)]);
+      line(s => [Math.cos(a) * Math.cos(2 * Math.PI * s), Math.cos(a) * Math.sin(2 * Math.PI * s), Math.sin(a)]);
     }
     for (let lon = 0; lon < 180; lon += 45) {
       const b = lon * Math.PI / 180;
-      line(t => [Math.cos(b) * Math.cos(2 * Math.PI * t), Math.sin(b) * Math.cos(2 * Math.PI * t), Math.sin(2 * Math.PI * t)]);
+      line(s => [Math.cos(b) * Math.cos(2 * Math.PI * s), Math.sin(b) * Math.cos(2 * Math.PI * s), Math.sin(2 * Math.PI * s)]);
     }
     g.strokeStyle = css("--rule"); g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
 
@@ -319,14 +397,22 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     if (showDots) {
       g.fillStyle = css("--dot");
       for (const s of spots) if (s.z >= 0) {
-        const rad = Math.min(4, 1 + Math.sqrt(s.boards.length) * 0.35);
-        g.beginPath(); g.arc(s.x, s.y, rad, 0, 7); g.fill();
+        g.beginPath(); g.arc(s.x, s.y, Math.min(4, 1 + Math.sqrt(s.boards.length) * 0.35), 0, 7); g.fill();
       }
     }
-    if (sel && sel.z >= 0) {
-      g.beginPath(); g.arc(sel.x, sel.y, 8, 0, 7); g.lineWidth = 2.5; g.strokeStyle = css("--surface"); g.stroke();
-      g.beginPath(); g.arc(sel.x, sel.y, 8, 0, 7); g.lineWidth = 1.5; g.strokeStyle = css("--ink"); g.stroke();
+    if (patch && B) {
+      const s = spotOf[patch.boards[B.idx]];
+      if (s && s.z >= 0) pulseRing(g, s.x, s.y, B);
     }
+  }
+
+  function pulseRing(g, x, y, B) {
+    g.save();
+    g.globalAlpha = B.alpha;
+    g.beginPath(); g.arc(x, y, 6, 0, 7); g.fillStyle = css("--moved"); g.fill();
+    g.globalAlpha = reduced ? 1 : B.alpha * (1 - B.phase);
+    g.beginPath(); g.arc(x, y, 7 + (reduced ? 4 : 14 * B.phase), 0, 7); g.lineWidth = 2; g.strokeStyle = css("--ink"); g.stroke();
+    g.restore();
   }
 
   // ---------- the unrolled map ----------
@@ -338,7 +424,7 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     const lon = Math.atan2(p[1], p[0]);
     return [G.pad + (lon + Math.PI) / (2 * Math.PI) * (G.w - 2 * G.pad), G.pad / 2 + (1 - p[2]) / 2 * (G.h - 1.5 * G.pad)];
   };
-  function drawFlat() {
+  function drawFlat(t, B) {
     if (!DATA) return;
     const G = flatGeom(), d = window.devicePixelRatio || 1;
     if (G.c.width !== Math.round(G.w * d)) { G.c.width = Math.round(G.w * d); G.c.height = Math.round(G.h * d); }
@@ -346,39 +432,92 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     g.clearRect(0, 0, G.w, G.h);
     const x0 = G.pad, x1 = G.w - G.pad, y0 = G.pad / 2, y1 = G.h - G.pad;
     g.fillStyle = css("--surface"); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    if (patch && B) {                                  // the patch itself, glowing on the beat
+      const b = Math.floor(patch.tile / NL), l = patch.tile % NL;
+      const px0 = x0 + l / NL * (x1 - x0), px1 = x0 + (l + 1) / NL * (x1 - x0);
+      const py1 = y0 + (1 - b / NB) * (y1 - y0), py0 = y0 + (1 - (b + 1) / NB) * (y1 - y0);
+      g.save(); g.globalAlpha = 0.18 + 0.3 * B.alpha; g.fillStyle = css("--div-hi"); g.fillRect(px0, py0, px1 - px0, py1 - py0); g.restore();
+      g.strokeStyle = css("--ink"); g.lineWidth = 1; g.strokeRect(px0 + .5, py0 + .5, px1 - px0 - 1, py1 - py0 - 1);
+    }
     g.strokeStyle = css("--rule"); g.lineWidth = 1; g.strokeRect(x0 + .5, y0 + .5, x1 - x0 - 1, y1 - y0 - 1);
     g.strokeStyle = css("--grid-line");
     for (const L of [-90, 0, 90]) { const x = x0 + (L + 180) / 360 * (x1 - x0); g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); }
     g.beginPath(); g.moveTo(x0, (y0 + y1) / 2); g.lineTo(x1, (y0 + y1) / 2); g.stroke();
     g.fillStyle = css("--ink-3"); g.font = `400 11px ${css("--font-data")}`; g.textAlign = "center"; g.textBaseline = "top";
     for (const L of [-180, -90, 0, 90, 180]) g.fillText(`${L}°`, x0 + (L + 180) / 360 * (x1 - x0), y1 + 5);
-    g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("top", 2, y0 + 6); g.fillText("bottom", 2, y1 - 6);
     const mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
     let most = 1; for (const s of spots) most = Math.max(most, s.boards.length);
     const size = Math.max(2, Math.min(4, (x1 - x0) / 220));
     const sorted = spots.slice().sort((a, b) => a.boards.length - b.boards.length);
     for (const s of sorted) {
-      const [x, y] = flatXY(s.p, G), t = most > 1 ? Math.log(s.boards.length) / Math.log(most) : 1;
-      const u = 0.35 + 0.65 * t;
-      g.fillStyle = `rgb(${mid.map((v, i) => Math.round(v + (hi[i] - v) * u)).join(",")})`;
+      const [x, y] = flatXY(s.p, G), u = 0.35 + 0.65 * (most > 1 ? Math.log(s.boards.length) / Math.log(most) : 1);
+      g.fillStyle = `rgb(${mix(mid, hi, u).map(Math.round).join(",")})`;
       g.fillRect(x - size / 2, y - size / 2, size, size);
     }
-    if (sel) {
-      const [x, y] = flatXY(sel.p, G);
-      g.beginPath(); g.arc(x, y, 7, 0, 7); g.lineWidth = 2; g.strokeStyle = css("--ink"); g.stroke();
+    if (patch && B) {
+      const s = spotOf[patch.boards[B.idx]];
+      if (s) { const [x, y] = flatXY(s.p, G); pulseRing(g, x, y, B); }
     }
   }
+
   function pickFlat(ev) {
     const G = flatGeom(), r = G.c.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
-    let best = null, bd = 144;
-    for (const s of spots) {
-      const [x, y] = flatXY(s.p, G), d = (x - mx) ** 2 + (y - my) ** 2;
-      if (d < bd) { bd = d; best = s; }
-    }
+    let best = null, bd = 196;
+    for (const s of spots) { const [x, y] = flatXY(s.p, G), d = (x - mx) ** 2 + (y - my) ** 2; if (d < bd) { bd = d; best = s; } }
     return best;
   }
 
-  // ---------- figures and detail ----------
+  // ---------- the board panel ----------
+  function drawBoard(B) {
+    const c = $("d-board"), r0 = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (r0.width && c.width !== Math.round(r0.width * d)) { c.width = c.height = Math.round(r0.width * d); }
+    const g = c.getContext("2d"), W = c.width, cell = W / n;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, W);
+    if (!patch) {
+      for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+        g.fillStyle = (r + k) % 2 ? css("--cell-a") : css("--cell-b"); g.fillRect(k * cell, r * cell, cell, cell);
+      }
+      return;
+    }
+    const lo = hex(css("--div-lo")), mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+      const v = Math.log(Math.max(patch.ratio[r * n + k], 0.1)) / patch.span, u = Math.max(-1, Math.min(1, v));
+      g.fillStyle = `rgb(${mix(mid, u < 0 ? lo : hi, Math.abs(u) * 0.85).map(Math.round).join(",")})`;
+      g.fillRect(k * cell + 1, r * cell + 1, cell - 2, cell - 2);
+    }
+    const cur = patch.B[B.idx], prev = B.idx > 0 ? patch.B[B.idx - 1] : null;
+    g.globalAlpha = B.alpha;
+    for (let r = 0; r < n; r++) {
+      const moved = prev && prev[r] !== cur[r];
+      g.beginPath(); g.arc((cur[r] + .5) * cell, (r + .5) * cell, cell * 0.3, 0, 7);
+      g.fillStyle = moved ? css("--moved") : css("--ink"); g.fill();
+      g.lineWidth = Math.max(1, cell * 0.06); g.strokeStyle = css("--surface"); g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+
+  function describe(B) {
+    if (!patch) {
+      $("d-head").textContent = set === "queens" ? "No patch selected" : "Random rooks";
+      $("d-body").textContent = set === "queens" ? "Tap or click a patch on the sphere or the unrolled map." :
+        "Random rook placements are only a baseline; their boards are not stored, so they cannot pulse.";
+      $("d-stats").textContent = "";
+      return;
+    }
+    const cur = patch.B[B.idx], prev = B.idx > 0 ? patch.B[B.idx - 1] : null;
+    let moved = 0; if (prev) for (let r = 0; r < n; r++) moved += prev[r] !== cur[r];
+    const here = spotOf[patch.boards[B.idx]].boards.length;
+    $("d-head").textContent = `Patch of ${patch.m} solution${patch.m === 1 ? "" : "s"} · board ${B.idx + 1} of ${patch.m}`;
+    $("d-body").textContent = (prev
+      ? `${moved} queen${moved === 1 ? "" : "s"} moved since the previous board${moved <= 4 ? " (a small move)" : ""}.`
+      : "The first board of the patch.") + ` ${here} solution${here === 1 ? "" : "s"} share this board's exact spot.`;
+    $("d-stats").textContent = patch.m > 1
+      ? `In this patch: two boards share ${patch.shared.toFixed(2)} queens on average (any two solutions: ${baseShared.toFixed(2)}); ` +
+        `${(100 * patch.links).toFixed(1)}% of pairs are one small move apart; ${Math.round(100 * patch.small)}% of the pulse steps are small moves.`
+      : "";
+  }
+
+  // ---------- figures ----------
   function figures() {
     const m = DATA[n].modes[mode], placed = m.points.filter(Boolean).length, Q = DATA[n].boards.length;
     const wv = m.waves.map(w => `(${w.join(", ")})`).join(" and ");
@@ -398,79 +537,65 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     $("poles").textContent = `Top: only the wave (${m.waves[0].join(", ")}) sounds. Bottom: only (${m.waves[1].join(", ")}). Equator: both equally loud. The longitude is their phase difference, seen from the centre of the board: 0° means in step.`;
   }
 
-  function drawBoard(b) {
-    const c = $("d-board"), g = c.getContext("2d"), cell = c.width / n;
-    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
-      g.fillStyle = (r + k) % 2 ? css("--cell-a") : css("--cell-b");
-      g.fillRect(k * cell, r * cell, cell, cell);
+  // ---------- the clock: one beat drives the board, the sphere and the unrolled map ----------
+  let needDraw = true;
+  function frame(t) {
+    if (DATA) {
+      const B = beat(t);
+      if (spinning) { yaw += Math.min(50, t - last) * 0.00022; needDraw = true; }
+      const animate = patch && pulsing && !reduced;
+      if (B && B.idx !== shownIdx) { shownIdx = B.idx; describe(B); needDraw = true; }
+      if (needDraw || animate) {
+        draw(t, B); drawFlat(t, B); drawBoard(B || { idx: 0, alpha: 1, phase: 0 });
+        needDraw = false;
+      }
     }
-    g.fillStyle = css("--ink");
-    for (let r = 0; r < n; r++) {
-      g.beginPath(); g.arc((parseInt(b[r], 16) + .5) * cell, (r + .5) * cell, cell * 0.3, 0, 7); g.fill();
-    }
+    last = t; requestAnimationFrame(frame);
   }
+  const redraw = () => { needDraw = true; };
 
-  function detail() {
-    if (!sel) {
-      $("d-head").textContent = "No spot selected"; $("d-board").hidden = true;
-      $("d-body").textContent = "Hover or tap the sphere to see the solutions at the nearest spot.";
-      $("prev-b").disabled = $("next-b").disabled = true; return;
-    }
-    const k = sel.boards.length, cellHeat = Math.exp(heat[cellOf(...sel.p)]);
-    const what = set === "queens" ? "solution" : "rook placement";
-    $("d-head").textContent = `${k} ${what}${k === 1 ? "" : "s"} on exactly this spot`;
-    const patch = `The patch around it holds ${cellHeat >= 1 ? cellHeat.toFixed(1) + "× the" : "about " + cellHeat.toFixed(2) + "× the"} average.`;
-    if (set === "queens") {
-      $("d-board").hidden = false; drawBoard(DATA[n].boards[sel.boards[selBoard]]);
-      $("d-body").textContent = `Board ${selBoard + 1} of ${k} here (solution ${sel.boards[selBoard] + 1}). ${patch}`;
-      $("prev-b").disabled = selBoard === 0; $("next-b").disabled = selBoard >= k - 1;
-    } else {
-      $("d-board").hidden = true;
-      $("d-body").textContent = `Random rook placements are a baseline; their boards are not stored. ${patch}`;
-      $("prev-b").disabled = $("next-b").disabled = true;
-    }
-  }
-
+  // ---------- interaction ----------
   function pick(ev) {
     const r = $("globe").getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
     let best = null, bd = 196;
-    for (const s of spots) {
-      if (s.z < 0) continue;
-      const d = (s.x - mx) ** 2 + (s.y - my) ** 2;
-      if (d < bd) { bd = d; best = s; }
-    }
-    return best;
+    for (const s of spots) { if (s.z < 0) continue; const d = (s.x - mx) ** 2 + (s.y - my) ** 2; if (d < bd) { bd = d; best = s; } }
+    if (best) return best;
+    // no spot close by: take the patch under the pointer
+    const R = r.width / 2 - 14, X = (mx - r.width / 2) / R, Y = -(my - r.height / 2) / R;
+    if (X * X + Y * Y >= 1) return null;
+    return { tile: cellOf(...unrotate(X, Y, Math.sqrt(1 - X * X - Y * Y))) };
   }
-
-  // ---------- interaction ----------
+  function select(s) {
+    if (!s || set !== "queens" || !tiles.has(s.tile)) return;
+    choosePatch(s.tile); pulsing = true; $("pulse").textContent = "Pause pulse"; shownIdx = -1; redraw();
+  }
   let drag = null;
   function onDown(ev) { drag = { x: ev.clientX, y: ev.clientY, yaw, pitch, moved: false }; $("globe").setPointerCapture(ev.pointerId); }
   function onMove(ev) {
-    if (drag) {
-      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; $("globe").classList.add("dragging"); stopSpin(); }
-      if (drag.moved) { yaw = drag.yaw + dx * 0.01; pitch = Math.max(-1.5, Math.min(1.5, drag.pitch + dy * 0.01)); draw(); return; }
-    }
-    if (ev.pointerType === "mouse") {
-      const s = pick(ev);
-      if (s && s !== sel) { sel = s; selBoard = 0; detail(); draw(); drawFlat(); }
-    }
+    if (!drag) return;
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; $("globe").classList.add("dragging"); stopSpin(); }
+    if (drag.moved) { yaw = drag.yaw + dx * 0.01; pitch = Math.max(-1.5, Math.min(1.5, drag.pitch + dy * 0.01)); redraw(); }
   }
   function onUp(ev) {
-    if (drag && !drag.moved) { sel = pick(ev); selBoard = 0; detail(); draw(); drawFlat(); }
+    if (drag && !drag.moved) select(pick(ev));
     drag = null; $("globe").classList.remove("dragging");
   }
   function stopSpin() { spinning = false; $("spin").textContent = "Turn slowly"; }
-  function tick(t) {
-    if (spinning && DATA) { yaw += Math.min(50, t - last) * 0.00022; draw(); }
-    last = t; requestAnimationFrame(tick);
+  function hold(idx) {
+    if (!patch) return;
+    pulsing = false; $("pulse").textContent = "Play pulse";
+    heldIdx = ((idx % patch.m) + patch.m) % patch.m; shownIdx = -1; redraw();
   }
+  function current() { const B = beat(performance.now()); return B ? B.idx : 0; }
 
   function refresh() {
     for (const b of $("sizes").children) b.setAttribute("aria-pressed", String(+b.dataset.n === n));
     for (const b of $("modes").children) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
     for (const b of $("sets").children) b.setAttribute("aria-pressed", String(b.dataset.set === set));
-    build(); figures(); detail(); draw(); drawFlat();
+    build(); figures(); shownIdx = -1;
+    describe(beat(performance.now()) || { idx: 0, alpha: 1, phase: 0 });
+    redraw();
   }
 
   function init(data) {
@@ -482,28 +607,38 @@ code { font-family: var(--font-data); font-size: 0.85em; }
     seg("sizes", b => { n = +b.dataset.n; });
     seg("modes", b => { mode = b.dataset.mode; });
     seg("sets", b => { set = b.dataset.set; });
-    $("dots").addEventListener("change", ev => { showDots = ev.target.checked; draw(); });
-    const flat = $("flat");
-    const flatPick = ev => { const s = pickFlat(ev); if (s && s !== sel) { sel = s; selBoard = 0; detail(); draw(); drawFlat(); } };
-    flat.addEventListener("pointermove", ev => { if (ev.pointerType === "mouse") flatPick(ev); });
-    flat.addEventListener("pointerdown", flatPick);
+    $("dots").addEventListener("change", ev => { showDots = ev.target.checked; redraw(); });
     const c = $("globe");
     c.addEventListener("pointerdown", onDown);
     c.addEventListener("pointermove", onMove);
     c.addEventListener("pointerup", onUp);
     c.addEventListener("pointercancel", () => { drag = null; c.classList.remove("dragging"); });
+    $("flat").addEventListener("click", ev => select(pickFlat(ev)));
     $("spin").addEventListener("click", () => { if (spinning) stopSpin(); else { spinning = true; $("spin").textContent = "Pause turning"; } });
-    $("reset").addEventListener("click", () => { yaw = 0.6; pitch = 0.35; draw(); });
-    $("prev-b").addEventListener("click", () => { if (sel && selBoard > 0) { selBoard--; detail(); } });
-    $("next-b").addEventListener("click", () => { if (sel && selBoard < sel.boards.length - 1) { selBoard++; detail(); } });
+    $("reset").addEventListener("click", () => { yaw = 0.6; pitch = 0.35; redraw(); });
+    $("pulse").addEventListener("click", () => {
+      if (!patch) return;
+      if (pulsing) hold(current());
+      else { pulsing = true; $("pulse").textContent = "Pause pulse"; beatStart = performance.now() - heldIdx * period; redraw(); }
+    });
+    $("prev-b").addEventListener("click", () => hold((pulsing ? current() : heldIdx) - 1));
+    $("next-b").addEventListener("click", () => hold((pulsing ? current() : heldIdx) + 1));
+    $("speeds").addEventListener("click", ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      const idx = pulsing ? current() : heldIdx;
+      period = +b.dataset.ms;
+      for (const x of $("speeds").children) x.setAttribute("aria-pressed", String(x === b));
+      if (pulsing) beatStart = performance.now() - idx * period;
+    });
     if (!spinning) $("spin").textContent = "Turn slowly";
+    if (reduced) period = 2200;
     refresh();
-    requestAnimationFrame(tick);
+    requestAnimationFrame(frame);
   }
 
-  new ResizeObserver(() => draw()).observe($("globe"));
-  new ResizeObserver(() => drawFlat()).observe($("flat"));
-  const retheme = () => { if (DATA) { colours(); detail(); draw(); drawFlat(); } };
+  new ResizeObserver(redraw).observe($("globe"));
+  new ResizeObserver(redraw).observe($("flat"));
+  const retheme = () => { if (DATA) { colours(); redraw(); } };
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
   new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 

@@ -1,0 +1,36 @@
+n = 10: 724 solutions, 724 on the sphere
+   patches with 20+ solutions: 6 (holding 320 solutions, largest 72)
+      own map vs overall map: 0.163   random groups of the same sizes: 0.158
+      queens two solutions share: 0.99   random groups: 1.03   (any two solutions: 1.03)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.48%   random groups: 0.57%   any two solutions: 0.46%
+      no two side-by-side patches both have enough solutions
+   spots with 20+ solutions: 5 (holding 320 solutions, largest 96)
+      own map vs overall map: 0.144   random groups of the same sizes: 0.152
+      queens two solutions share: 0.97   random groups: 1.04   (any two solutions: 1.03)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.39%   random groups: 0.45%   any two solutions: 0.46%
+n = 11: 2680 solutions, 2592 on the sphere
+   patches with 20+ solutions: 16 (holding 942 solutions, largest 100)
+      own map vs overall map: 0.217   random groups of the same sizes: 0.174
+      queens two solutions share: 1.16   random groups: 1.05   (any two solutions: 1.04)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.33%   random groups: 0.13%   any two solutions: 0.11%
+      no two side-by-side patches both have enough solutions
+   spots with 20+ solutions: 11 (holding 920 solutions, largest 212)
+      own map vs overall map: 0.204   random groups of the same sizes: 0.167
+      queens two solutions share: 1.15   random groups: 1.05   (any two solutions: 1.04)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.24%   random groups: 0.13%   any two solutions: 0.11%
+n = 12: 14200 solutions, 14200 on the sphere
+   patches with 20+ solutions: 228 (holding 8761 solutions, largest 177)
+      own map vs overall map: 0.266   random groups of the same sizes: 0.231
+      queens two solutions share: 1.17   random groups: 1.04   (any two solutions: 1.04)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.27%   random groups: 0.02%   any two solutions: 0.03%
+      own maps of side-by-side patches alike: +0.12 (56 pairs)   patches picked at random: +0.00
+   spots with 20+ solutions: 152 (holding 5996 solutions, largest 168)
+      own map vs overall map: 0.270   random groups of the same sizes: 0.228
+      queens two solutions share: 1.17   random groups: 1.04   (any two solutions: 1.04)
+      squares every solution of the group uses: average 0.00, most 0   random groups: average 0.00
+      two solutions linked by a small move: 0.32%   random groups: 0.03%   any two solutions: 0.03%

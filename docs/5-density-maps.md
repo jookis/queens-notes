@@ -292,6 +292,25 @@ at the same n, and classes fitted the same way to random rook placements.
   back, it is in about the same place.
 - Only up to n = 13: the fitting code runs out of memory from n = 14 on.
 
+**Do the classes follow a cycle along the list of solutions?** `classes_in_order.py` takes the 14,200
+solutions at n = 12 in the order the search finds them (first-row column first, then the second row,
+and so on) and compares the class sequence with the same list shuffled.
+
+- **The list is an exact palindrome.** The left-right mirror image of solution i is always solution
+  14,201 − i, and it is always in the same class (100%, shuffled: 35%), because a class does not care
+  about mirroring. So the class sequence reads the same backwards.
+- **Blocks by the first row.** Each column of the top queen has its own class mix: class 1 holds 64% of
+  the solutions with the top queen in a corner column, 62% in the two centre columns, but 33% in
+  columns 5 and 8. Mirror columns have identical mixes.
+- **Only short runs.** The same class repeats for 2.1 solutions in a row on average, against 1.5 for a
+  shuffled list.
+- **No fixed cycle.** The strongest repeats along the list are half, a third and a quarter of its
+  length (7,100, 4,733 and 3,550 solutions), which come from the palindrome and the block pattern. A
+  few repeats every 400 to 650 solutions stand out 3 to 5 times above shuffled lists, perhaps the
+  lengths of blocks sharing the first two queens (not checked). No short period does (at most 1.3
+  times the shuffled level).
+- So the classes follow the structure of the search order, not a cycle of their own.
+
 ## A heatmap on a sphere **[single run]**
 
 The density map stacks all solutions on the board squares. Here each solution gets its own spot on
@@ -362,8 +381,41 @@ lean below depends on these choices; its strength does not.)
   it can look like 4, because a sphere only shows its front half. Each shape above the equator has its
   exact mirror image below. **[open]** Why the repeat is n/2 on even boards and absent at n = 11; the
   hands pointing at multiples of 360°/n make some link to n likely, but this is not worked out.
-- **[open]** What the solutions piled on one spot have in common, for example whether they are linked
-  by small moves.
+
+**What the solutions in one patch have in common.** `sphere_tiles.py` cuts the diagonal sphere into the
+same 24 x 48 equal-area patches as the page and looks at every patch with at least 20 solutions (228
+patches holding 8,761 solutions at n = 12). Each measure is compared with random groups of solutions of
+the same sizes:
+
+```
+ n = 12                                         patches    random groups   any two solutions
+ two solutions linked by a small move (2-4)      0.27%         0.02%            0.03%
+ queens two solutions share                      1.17          1.04             1.04
+ squares every solution of the group uses        0             0
+ own map vs overall map (0 = same)               0.266         0.231
+ own maps of side-by-side patches alike          +0.12   (random patch pairs: +0.00)
+```
+
+- **A patch is a neighbourhood of the move web.** Two solutions of the same patch are one small move
+  apart about 10 times as often as two random solutions. The same holds for solutions on exactly the
+  same spot (0.32% against 0.03%). At n = 11 the factor is about 2.5 (0.33% against 0.13%). At n = 10
+  only 6 patches have 20 solutions, and there is no effect.
+- **But there is no fixed core.** Solutions of a patch share only a few more queens than random pairs
+  (1.17 against 1.04), and no square is used by all solutions of any patch. A patch's own density map
+  differs from the overall map only a little more than a random group's does, and side-by-side patches
+  are only slightly alike (+0.12).
+- So the diagonal waves group solutions that are close in the web of small moves, without pinning any
+  particular queen. On the page, a chosen patch pulses through its solutions, each time taking the
+  remaining solution with the fewest queens changed, with the moved queens marked, in time with a pulse
+  on the sphere. *Correction kept for honesty:* this was first described as keeping each step small. It
+  does not: at n = 12 only 4% of the steps change exactly 4 queens and 88% change more than 6, because
+  most solutions have no small-move neighbour inside their patch (0.27% of pairs are).
+- **When 4 queens change, it is two swaps, not a rotation.** The 4 queens of a 4-queen change keep
+  their rows and trade columns, either as a rotation of four or as two separate swaps. Over all 4-queen
+  moves at n = 12, 57% are rotations (random trades of 4 columns would give 67%). But among the
+  4-queen steps inside sphere patches, 98% are two swaps (93% at n = 10 and 11). **[open]** A guess:
+  two swaps can cancel each other's effect on the diagonal waves and keep both boards on one spot,
+  which a rotation of four rarely does. *(Scratch run, not in a repo script.)*
 
 ## Counts alone are too few **[argument]**
 

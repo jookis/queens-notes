@@ -1,0 +1,361 @@
+<title>Pulsing Queen Heatmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the lab-notebook tool of the density pages. Controls, then the board heatmap beside the playback panel. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #fcfcfb;
+  --ink: #111418;
+  --ink-2: #4f5561;
+  --ink-3: #7c8390;
+  --rule: #dde2ea;
+  --div-lo: #1c5cab;   /* squares used less than average */
+  --div-mid: #f0efec;  /* the average square */
+  --div-hi: #d03c3b;   /* squares used more than average */
+  --moved: #eb6834;
+  --pulse: #1b1f26;    /* the tone a square pulses towards */
+  --accent: #2a78d6;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+    --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767; --moved: #d95926; --accent: #3987e5;
+    --pulse: #f2f4f7;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+  --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767; --moved: #d95926; --accent: #3987e5;
+  --pulse: #f2f4f7;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.55 var(--font-body);
+  margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+}
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 68ch; }
+.eyebrow { font: 500 0.7rem/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); vertical-align: middle; }
+.seg button {
+  font: 500 0.85rem/1 var(--font-data); color: var(--ink-2); background: none; border: 0;
+  padding: 9px 14px; cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl-label { font-size: 0.85rem; color: var(--ink-2); margin-right: 8px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--ink-2); cursor: pointer; }
+.btn {
+  font: 500 0.85rem/1 var(--font-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 9px 14px; cursor: pointer;
+}
+.btn:hover { border-color: var(--ink-3); }
+
+.stage { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.board { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1; justify-self: center; }
+.board canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scale { display: grid; gap: 4px; width: 100%; max-width: 440px; justify-self: center; }
+.scale .bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-lo), var(--div-mid), var(--div-hi)); border: 1px solid var(--rule); }
+.scale .ticks, .scale .ends { display: flex; justify-content: space-between; font: 400 0.72rem/1.2 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.scale .ends { font-family: var(--font-body); font-size: 0.78rem; color: var(--ink-2); }
+
+.side h2 { font-size: 1rem; margin: 0; }
+.now { font: 500 1.05rem/1.4 var(--font-data); font-variant-numeric: tabular-nums; }
+.say { font-size: 0.9rem; color: var(--ink-2); margin: 0; min-height: 2.8em; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.progress { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.progress div { height: 100%; width: 0; background: var(--accent); }
+.key { display: grid; gap: 6px; font-size: 0.84rem; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: 12px; }
+.key svg { vertical-align: -2px; margin-right: 6px; }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notes section { min-width: 0; }
+.notes h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--ink-2); font-size: 0.92rem; max-width: 62ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+.status { color: var(--ink-2); }
+
+@media (max-width: 820px) {
+  .stage, .notes { grid-template-columns: 1fr; }
+}
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Queen puzzle notes · density maps</p>
+    <h1>Pulsing queen heatmap</h1>
+    <p class="lede">The ordinary density map of the board, with the solutions blinking over it one after another. Each
+      solution shows as its squares in a dark tone, and each one crossfades smoothly into the next: squares both share stay
+      lit, and only the queens that change fade from one square to another. In build-up mode the heatmap starts
+      empty and fills in from the solutions shown so far.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label" id="n-label">Board size</span><span class="seg" id="sizes" role="group" aria-labelledby="n-label"></span></div>
+    <div><span class="ctl-label" id="o-label">Order</span><span class="seg" id="orders" role="group" aria-labelledby="o-label">
+      <button type="button" data-order="patch" aria-pressed="true">Similar ones together</button><button type="button" data-order="random" aria-pressed="false">Random</button>
+    </span></div>
+    <div><span class="ctl-label" id="b-label">Heatmap</span><span class="seg" id="bgs" role="group" aria-labelledby="b-label">
+      <button type="button" data-bg="full" aria-pressed="true">All solutions</button><button type="button" data-bg="build" aria-pressed="false">Build up</button>
+    </span></div>
+    <label class="toggle"><input type="checkbox" id="stagger"> Light queens row by row</label>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="board"><canvas id="board" aria-label="Density heatmap of the board with solutions blinking over it"></canvas></div>
+      <div class="scale"><div class="bar"></div><div class="ticks" id="ticks"></div><div class="ends"><span>used less than the average square</span><span>more</span></div></div>
+    </div>
+
+    <aside class="panel side">
+      <h2>Now showing</h2>
+      <div class="now" id="now"></div>
+      <p class="say" id="say"></p>
+      <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+      <div class="row">
+        <button type="button" class="btn" id="play">Pause</button>
+        <button type="button" class="btn" id="prev" aria-label="Previous solution">←</button>
+        <button type="button" class="btn" id="next" aria-label="Next solution">→</button>
+        <button type="button" class="btn" id="restart">Start over</button>
+      </div>
+      <div class="row">
+        <span class="ctl-label" id="sp-label">Delay</span>
+        <span class="seg" id="speeds" role="group" aria-labelledby="sp-label">
+          <button type="button" data-ms="3000" aria-pressed="true">Slow</button><button type="button" data-ms="1600" aria-pressed="false">Medium</button><button type="button" data-ms="700" aria-pressed="false">Quick</button>
+        </span>
+      </div>
+      <div class="key">
+        <span><svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="var(--pulse)"/></svg>Square pulsing: a queen of the current solution stands here</span>
+        <span><svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="var(--moved)"/></svg>Pulsing orange: that queen moved since the previous solution</span>
+      </div>
+    </aside>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <div class="notes">
+    <section>
+      <h3>Similar ones together</h3>
+      <p>Solutions are grouped by their patch on the diagonal sphere, largest patch first, and within a patch each next
+        solution is the one with the fewest queens changed. That is still usually many: at 12×12 most steps change more
+        than 6 queens, because few solutions have a close neighbour inside their patch. When exactly 4 queens change, it
+        is almost always two separate swaps, not a rotation of four.</p>
+    </section>
+    <section>
+      <h3>What the heatmap is</h3>
+      <p>How often each square holds a queen across all solutions, relative to the average square. The squares near the
+        corners are the emptiest, but no square is ever empty. In build-up mode the map starts from nothing and uses only the
+        solutions shown so far.</p>
+    </section>
+    <section>
+      <h3>Source</h3>
+      <p>Solutions and patches come from <code>scripts/density/flat_sphere.py</code>. The notes are in
+        <code>docs/5-density-maps.md</code>.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const NB = 24, NL = 48;                 // the sphere patches, as on the sphere page
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let DATA = null, n = 12, order = "patch", bg = "full", stagger = false;
+  let seq = [], patchOf = [], B = [], full = null, built = null, builtUpTo = -1;
+  let period = 3000, playing = true, start = 0, held = 0, shown = -1;
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const hex = h => { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const mix = (a, b, u) => a.map((x, i) => x + (b[i] - x) * u);
+  const diff = (a, b) => { let d = 0; for (let r = 0; r < n; r++) d += a[r] !== b[r]; return d; };
+
+  function prepare() {
+    const e = DATA[n];
+    B = e.boards.map(b => Array.from(b, ch => parseInt(ch, 16)));
+    const Q = B.length;
+    full = new Float64Array(n * n);
+    for (const b of B) for (let r = 0; r < n; r++) full[r * n + b[r]]++;
+    // group by sphere patch (diagonal waves); solutions without a spot go last
+    const pts = e.modes.diagonal.points, groups = new Map();
+    patchOf = new Array(Q).fill(-1);
+    pts.forEach((p, i) => {
+      let t = -1;
+      if (p) {
+        const b = Math.min(NB - 1, Math.floor((p[2] + 1) / 2 * NB));
+        const l = Math.min(NL - 1, Math.floor((Math.atan2(p[1], p[0]) + Math.PI) / (2 * Math.PI) * NL));
+        t = b * NL + l;
+      }
+      patchOf[i] = t;
+      if (!groups.has(t)) groups.set(t, []);
+      groups.get(t).push(i);
+    });
+    if (order === "random") {
+      seq = Array.from({ length: Q }, (_, i) => i);
+      let s = 12345;                                  // fixed shuffle, so "start over" repeats it
+      for (let i = Q - 1; i > 0; i--) { s = (s * 16807) % 2147483647; const j = s % (i + 1); [seq[i], seq[j]] = [seq[j], seq[i]]; }
+    } else {
+      const list = [...groups.entries()].sort((a, b) => (a[0] === -1) - (b[0] === -1) || b[1].length - a[1].length);
+      seq = [];
+      for (const [, members] of list) {
+        const used = new Uint8Array(members.length);
+        let cur = 0; used[0] = 1; seq.push(members[0]);
+        for (let s = 1; s < members.length; s++) {
+          let best = -1, bd = 99;
+          for (let j = 0; j < members.length; j++) if (!used[j]) { const d = diff(B[members[cur]], B[members[j]]); if (d < bd) { bd = d; best = j; } }
+          used[best] = 1; cur = best; seq.push(members[best]);
+        }
+      }
+    }
+    built = new Float64Array(n * n); builtUpTo = -1;
+    start = performance.now(); held = 0; shown = -1;
+  }
+
+  function beat(t) {
+    if (!playing) return { k: held, phase: 0 };
+    // a frame's timestamp can be a little earlier than the moment the order was set up
+    const x = Math.max(0, (t - start) / period), k = Math.floor(x);
+    return k >= seq.length - 1 ? { k: seq.length - 1, phase: 0 } : { k, phase: x - k };
+  }
+  // each step: hold the current solution, then crossfade to the next one along an eased curve
+  const HOLD = 0.45;
+  const ease = v => v <= 0 ? 0 : v >= 1 ? 1 : v * v * (3 - 2 * v);
+  function blendAt(phase, r) {
+    if (reduced || !playing) return 0;
+    // with "row by row", each row starts its crossfade a little later than the one above
+    const lag = stagger ? r * (1 - HOLD) / (2 * n) : 0, width = stagger ? (1 - HOLD) / 2 : 1 - HOLD;
+    return ease((phase - HOLD - lag) / width);
+  }
+
+  function heatFor(k) {
+    if (bg === "full") return full;
+    if (k < builtUpTo) { built.fill(0); builtUpTo = -1; }
+    while (builtUpTo < k) { builtUpTo++; const b = B[seq[builtUpTo]]; for (let r = 0; r < n; r++) built[r * n + b[r]]++; }
+    return built;
+  }
+
+  function draw(t) {
+    const c = $("board"), r0 = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(r0.width * d)) { c.width = c.height = Math.round(r0.width * d); }
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    const W = r0.width, cell = W / n;
+    g.clearRect(0, 0, W, W);
+    const { k, phase } = beat(t);
+    const cur = B[seq[k]], prev = k > 0 ? B[seq[k - 1]] : null, next = k + 1 < seq.length ? B[seq[k + 1]] : null;
+    const s = Array.from({ length: n }, (_, r) => next ? blendAt(phase, r) : 0);
+    let H = heatFor(k);
+    if (bg === "build" && next) {                   // the next solution joins the built-up map gradually
+      H = Float64Array.from(H);
+      for (let r = 0; r < n; r++) H[r * n + next[r]] += s[r];
+    }
+    let total = 0; for (const v of H) total += v;
+    const mean = total / (n * n);
+    let span = 0.05;
+    const ratio = Array.from(H, v => mean > 0 ? v / mean : 1);
+    for (const v of ratio) span = Math.max(span, Math.abs(Math.log(Math.max(v, 0.1))));
+    const lo = hex(css("--div-lo")), mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
+    for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) {
+      const u = Math.max(-1, Math.min(1, Math.log(Math.max(ratio[r * n + q], 0.1)) / span));
+      g.fillStyle = `rgb(${mix(mid, u < 0 ? lo : hi, Math.abs(u)).map(Math.round).join(",")})`;
+      g.fillRect(q * cell + 1, r * cell + 1, cell - 2, cell - 2);
+    }
+    const f = v => v.toFixed(2) + "×";
+    const ticks = [Math.exp(-span), 1, Math.exp(span)].map(v => `<span>${f(v)}</span>`).join("");
+    if ($("ticks").innerHTML !== ticks) $("ticks").innerHTML = ticks;
+
+    // the squares of the current solution, crossfading into those of the next one: a square in both stays
+    // lit, and its colour glides from one tone to the other
+    const dark = hex(css("--pulse")), moved = hex(css("--moved"));
+    const tone = (b, before, r) => before && before[r] !== b[r] && order === "patch" ? moved : dark;
+    for (let r = 0; r < n; r++) {
+      const lit = new Map();
+      const add = (q, w, col) => {
+        if (w <= 0) return;
+        const e = lit.get(q) || { w: 0, col: [0, 0, 0] };
+        e.w += w; e.col = e.col.map((x, i) => x + w * col[i]); lit.set(q, e);
+      };
+      add(cur[r], 1 - s[r], tone(cur, prev, r));
+      if (next) add(next[r], s[r], tone(next, cur, r));
+      for (const [q, e] of lit) {
+        const u = Math.max(-1, Math.min(1, Math.log(Math.max(ratio[r * n + q], 0.1)) / span));
+        const base = mix(mid, u < 0 ? lo : hi, Math.abs(u)), col = e.col.map(x => x / e.w);
+        g.fillStyle = `rgb(${mix(base, col, 0.85 * Math.min(1, e.w)).map(Math.round).join(",")})`;
+        g.fillRect(q * cell + 1, r * cell + 1, cell - 2, cell - 2);
+      }
+    }
+
+    if (k !== shown) {
+      shown = k;
+      const moved = prev ? diff(prev, cur) : 0;
+      $("now").textContent = `Solution ${k + 1} of ${seq.length.toLocaleString()}`;
+      let say = prev ? `${moved} queen${moved === 1 ? "" : "s"} moved since the previous one${moved <= 4 ? " (a small move)" : ""}.` : "The first solution.";
+      if (order === "patch") {
+        const t = patchOf[seq[k]];
+        say += t === -1 ? " This solution has no spot on the diagonal sphere." :
+          (prev && patchOf[seq[k - 1]] !== t ? " A new sphere patch starts here." : "");
+      }
+      if (bg === "build") say += ` The heatmap is built from the ${(k + 1).toLocaleString()} solution${k ? "s" : ""} shown so far.`;
+      $("say").textContent = say;
+      $("bar").style.width = `${100 * (k + 1) / seq.length}%`;
+    }
+  }
+
+  function frame(t) { if (DATA) draw(t); requestAnimationFrame(frame); }
+  function current() { return beat(performance.now()).k; }
+  function hold(k) { playing = false; $("play").textContent = "Play"; held = Math.max(0, Math.min(seq.length - 1, k)); shown = -1; }
+
+  function refresh() {
+    for (const b of $("sizes").children) b.setAttribute("aria-pressed", String(+b.dataset.n === n));
+    for (const b of $("orders").children) b.setAttribute("aria-pressed", String(b.dataset.order === order));
+    for (const b of $("bgs").children) b.setAttribute("aria-pressed", String(b.dataset.bg === bg));
+    prepare();
+  }
+
+  function init(data) {
+    DATA = data;
+    const sizes = Object.keys(data).map(Number).sort((a, b) => a - b);
+    $("sizes").innerHTML = sizes.map(s => `<button type="button" data-n="${s}" aria-pressed="false">${s}×${s}</button>`).join("");
+    n = sizes.includes(12) ? 12 : sizes[sizes.length - 1];
+    const seg = (id, fn) => $(id).addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { fn(b); refresh(); } });
+    seg("sizes", b => { n = +b.dataset.n; });
+    seg("orders", b => { order = b.dataset.order; });
+    seg("bgs", b => { bg = b.dataset.bg; });
+    $("stagger").addEventListener("change", ev => { stagger = ev.target.checked; });
+    $("play").addEventListener("click", () => {
+      if (playing) hold(current());
+      else { playing = true; $("play").textContent = "Pause"; start = performance.now() - held * period; }
+    });
+    $("prev").addEventListener("click", () => hold((playing ? current() : held) - 1));
+    $("next").addEventListener("click", () => hold((playing ? current() : held) + 1));
+    $("restart").addEventListener("click", () => { built.fill(0); builtUpTo = -1; held = 0; shown = -1; start = performance.now(); });
+    $("speeds").addEventListener("click", ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      const k = playing ? current() : held;
+      period = +b.dataset.ms;
+      for (const x of $("speeds").children) x.setAttribute("aria-pressed", String(x === b));
+      if (playing) start = performance.now() - k * period;
+    });
+    refresh();
+    requestAnimationFrame(frame);
+  }
+
+  fetch("flat_sphere.json")
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      const s = $("status"); s.hidden = false;
+      s.textContent = "Could not load flat_sphere.json. Run flat_sphere.py, then serve this folder (python3 -m http.server) and open the page from there.";
+    });
+})();
+</script>

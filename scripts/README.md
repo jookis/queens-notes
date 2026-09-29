@@ -67,8 +67,10 @@ C programs: `cc -O2 -o prog prog.c`. Rust programs: `rustc -O prog.rs`.
 | `solution_moves.py [lo hi]` | moves of 2, 3 and 4 queens between solutions: connected groups, flexibility map, shortest paths; writes `solution_moves.json` for `solution_moves.html` | n = 8 to 12: ~10 s |
 | `corner_room.py` | why corner queens move more often: open squares per queen, and for swaps the partner's return square, corner vs inside; reads `solution_moves.json` | seconds |
 | `classes_vs_moves.py` | the 4 learned classes of `aligned_heat.py` against the moves: how flexible each class is, and how many moves stay inside a class; reads `solution_moves.json` | ~1 min |
+| `classes_in_order.py` | the 4 classes along the list of 12x12 solutions in search order: runs, mirror palindrome, first-row blocks, repeats, against shuffled lists | ~30 s |
 | `classes_across_n.py` | do the 4 classes come back at other sizes: class maps of n = 10 to 13 compared with turns (and shifts), against random-rook classes | ~10 min |
-| `flat_sphere.py [lo hi]` | each flat solution on its own spot of a sphere (Hopf map of two waves, measured from the board centre), diagonal waves and the most spread-out pair, against random rooks; mirror checks, phase lean and height rows; writes `flat_sphere.json` for `flat_sphere.html` (sphere and unrolled map) | n = 10 to 12: ~2 min |
+| `flat_sphere.py [lo hi]` | each flat solution on its own spot of a sphere (Hopf map of two waves, measured from the board centre), diagonal waves and the most spread-out pair, against random rooks; mirror checks, phase lean and height rows; writes `flat_sphere.json` for `flat_sphere.html` (sphere, unrolled map, and a pulsing view of one patch) and for `pulse_map.html` (the ordinary density map with the solutions blinking over it) | n = 10 to 12: ~2 min |
+| `sphere_tiles.py` | what the solutions in one patch of the diagonal sphere have in common: small-move links, shared queens, own maps, against random groups; reads `flat_sphere.json` and `solution_moves.json` | seconds |
 | `queens_semi_heat.c` | `queens_semi_heat <n> <mode> > semi_heat_<n>_<mode>.txt`: mode 1 semi-queens (one diagonal family), mode 2 ordinary queens | |
 
 `run_19_20.txt` is the console output of the n = 19 and 20 runs.
