@@ -1,0 +1,518 @@
+<title>Queen Solution Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the lab-notebook tool of the density pages. Controls, a figure strip, then the heat sphere beside the detail panel. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #fcfcfb;
+  --ink: #111418;
+  --ink-2: #4f5561;
+  --ink-3: #7c8390;
+  --rule: #dde2ea;
+  --div-lo: #1c5cab;   /* fewer solutions than the average patch */
+  --div-mid: #f0efec;  /* the average patch */
+  --div-hi: #d03c3b;   /* more than the average patch */
+  --grid-line: rgba(17, 20, 24, 0.16);
+  --dot: rgba(17, 20, 24, 0.55);
+  --cell-a: #e6ebf2;
+  --cell-b: #f6f8fb;
+  --accent: #2a78d6;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+    --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
+    --grid-line: rgba(242, 244, 247, 0.16); --dot: rgba(242, 244, 247, 0.6);
+    --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --surface: #1a1c20; --ink: #f2f4f7; --ink-2: #c0c5ce; --ink-3: #8d94a0; --rule: #2e333b;
+  --div-lo: #3987e5; --div-mid: #383835; --div-hi: #e66767;
+  --grid-line: rgba(242, 244, 247, 0.16); --dot: rgba(242, 244, 247, 0.6);
+  --cell-a: #2a2f37; --cell-b: #1f2329; --accent: #3987e5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.55 var(--font-body);
+  margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+}
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 68ch; }
+.eyebrow { font: 500 0.7rem/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); vertical-align: middle; }
+.seg button {
+  font: 500 0.85rem/1 var(--font-data); color: var(--ink-2); background: none; border: 0;
+  padding: 9px 14px; cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl-label { font-size: 0.85rem; color: var(--ink-2); margin-right: 8px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--ink-2); cursor: pointer; }
+.btn {
+  font: 500 0.82rem/1 var(--font-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn:disabled { color: var(--ink-3); cursor: default; }
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.fig { background: var(--surface); padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.fig .k { font-size: 0.8rem; color: var(--ink-2); }
+.fig .v { font: 500 1.35rem/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.fig .r { font: 400 0.78rem/1.3 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.globe { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1; justify-self: center; }
+.globe canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.globe canvas.dragging { cursor: grabbing; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; }
+.hint { font: 400 0.75rem/1.4 var(--font-data); color: var(--ink-3); text-align: center; }
+.unrolled { display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.unrolled h3 { font-size: 0.95rem; margin: 0; }
+.unrolled p { margin: 0; font-size: 0.85rem; color: var(--ink-2); }
+.flatmap { position: relative; width: 100%; aspect-ratio: 2; max-width: 100%; }
+.flatmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+.scale { display: grid; gap: 4px; width: 100%; max-width: 420px; justify-self: center; }
+.scale .bar { height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-lo), var(--div-mid), var(--div-hi)); border: 1px solid var(--rule); }
+.scale .ticks, .scale .ends { display: flex; justify-content: space-between; font: 400 0.72rem/1.2 var(--font-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.scale .ends { font-family: var(--font-body); font-size: 0.78rem; color: var(--ink-2); }
+
+.side h2 { font-size: 1rem; margin: 0; }
+.side p { margin: 0; color: var(--ink-2); font-size: 0.9rem; }
+.poles { font: 400 0.8rem/1.5 var(--font-data); color: var(--ink-2); }
+.detail { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 10px; }
+.detail .d-head { font: 500 0.8rem/1.4 var(--font-data); }
+.detail canvas { width: 156px; height: 156px; display: block; }
+.detail .d-body { font-size: 0.86rem; color: var(--ink-2); }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notes section { min-width: 0; }
+.notes h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--ink-2); font-size: 0.92rem; max-width: 62ch; }
+code { font-family: var(--font-data); font-size: 0.85em; }
+.status { color: var(--ink-2); }
+
+@media (max-width: 820px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stage, .notes { grid-template-columns: 1fr; }
+}
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Queen puzzle notes · density maps</p>
+    <h1>A heatmap on a sphere</h1>
+    <p class="lede">Each solution of the flat board gets its own spot on a sphere, placed by two of its waves: how loud each
+      wave is sets the height, and their phase difference sets the longitude. The colour shows how many solutions sit in
+      each patch. Nothing is stacked on board squares. Drag to turn the sphere, and hover to see the boards at a spot.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label" id="n-label">Board size</span><span class="seg" id="sizes" role="group" aria-labelledby="n-label"></span></div>
+    <div><span class="ctl-label" id="w-label">Waves</span><span class="seg" id="modes" role="group" aria-labelledby="w-label">
+      <button type="button" data-mode="diagonal" aria-pressed="true">Diagonal and anti-diagonal</button><button type="button" data-mode="spread" aria-pressed="false">Most spread out</button>
+    </span></div>
+    <div><span class="ctl-label" id="s-label">Boards</span><span class="seg" id="sets" role="group" aria-labelledby="s-label">
+      <button type="button" data-set="queens" aria-pressed="true">Queen solutions</button><button type="button" data-set="rooks" aria-pressed="false">Random rooks</button>
+    </span></div>
+    <label class="toggle"><input type="checkbox" id="dots"> Show each spot as a dot</label>
+  </div>
+
+  <div class="figures" id="figures" aria-live="polite"></div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="globe"><canvas id="globe" aria-label="Sphere coloured by how many solutions sit in each patch"></canvas></div>
+      <div class="scale"><div class="bar"></div><div class="ticks" id="ticks"></div><div class="ends"><span>fewer than average</span><span>more</span></div></div>
+      <div class="row">
+        <button type="button" class="btn" id="spin">Pause turning</button>
+        <button type="button" class="btn" id="reset">Reset view</button>
+      </div>
+      <div class="hint">Drag to turn. Hover or tap to pick the nearest spot on the near side.</div>
+      <div class="unrolled">
+        <h3>Unrolled map</h3>
+        <p>The whole sphere laid flat: longitude across (0° in the middle, where the two waves are in step), height up and
+          down, so equal areas stay equal. Each spot is one square, darker red when more solutions share it.</p>
+        <div class="flatmap"><canvas id="flat" aria-label="Unrolled map of every spot on the sphere"></canvas></div>
+      </div>
+    </div>
+
+    <aside class="panel side">
+      <h2>At this spot</h2>
+      <p class="poles" id="poles"></p>
+      <div class="detail">
+        <div class="d-head" id="d-head">No spot selected</div>
+        <canvas id="d-board" width="312" height="312" hidden></canvas>
+        <div class="d-body" id="d-body">Hover or tap the sphere to see the solutions at the nearest spot.</div>
+        <div class="row" style="justify-content: flex-start">
+          <button type="button" class="btn" id="prev-b" disabled>← Board</button>
+          <button type="button" class="btn" id="next-b" disabled>Board →</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <div class="notes">
+    <section>
+      <h3>Diagonal waves pile solutions up, in rows</h3>
+      <p>With the diagonal and anti-diagonal waves, queen solutions share far fewer spots than random rook placements:
+        2,464 spots for 14,200 solutions at 12×12, with up to 168 on one spot. Their diagonal waves are also quieter. The
+        diagonal rule makes solutions alike in exactly these two waves. The spots sit on few height levels (311 against
+        7,863 for rooks), which the unrolled map shows as rows.</p>
+    </section>
+    <section>
+      <h3>Other waves spread them out</h3>
+      <p>Searching all pairs of waves finds pairs that give most solutions their own spot (12,603 of 14,200 at 12×12,
+        close to random rooks). These waves have no simple meaning, so the heat is harder to read.</p>
+    </section>
+    <section>
+      <h3>Two mirror halves and a dense side</h3>
+      <p>Flipping a board top to bottom swaps the two diagonal waves, so the lower half of the sphere is an exact mirror
+        image of the upper half. A ring of spots just above the equator and its mirror below meet in a figure 8. Seen from
+        the centre of the board, queen solutions lean towards the two waves being in step (longitude 0); random rooks
+        do not.</p>
+    </section>
+    <section>
+      <h3>Solutions with no spot</h3>
+      <p>At 11×11, 88 solutions have both diagonal waves silent and get no spot. They are exactly the doughnut solutions,
+        which have one queen on every wrapped diagonal.</p>
+    </section>
+    <section>
+      <h3>Source</h3>
+      <p><code>scripts/density/flat_sphere.py</code> writes the data. The notes are in <code>docs/5-density-maps.md</code>.
+        Single run, not yet repeated.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const NB = 24, NL = 48;                          // equal-area patches: height bands x longitude slices
+  let DATA = null, n = 12, mode = "diagonal", set = "queens", showDots = false;
+  let yaw = 0.6, pitch = 0.35, spinning = true, last = 0;
+  let spots = [], heat = null, heatSpan = 1, cellColors = null, sel = null, selBoard = 0;
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const hex = h => { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) spinning = false;
+
+  function rotate([x, y, z]) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const x1 = cy * x + sy * y, y1 = -sy * x + cy * y;
+    return [x1, cp * z - sp * y1, sp * z + cp * y1];
+  }
+  function unrotate(X, Y, Z) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const z = cp * Y + sp * Z, y1 = -sp * Y + cp * Z, x1 = X;
+    return [cy * x1 - sy * y1, sy * x1 + cy * y1, z];
+  }
+  const cellOf = (x, y, z) => {
+    const b = Math.min(NB - 1, Math.max(0, Math.floor((z + 1) / 2 * NB)));
+    const l = Math.min(NL - 1, Math.max(0, Math.floor((Math.atan2(y, x) + Math.PI) / (2 * Math.PI) * NL)));
+    return b * NL + l;
+  };
+
+  // ---------- data for the current choice ----------
+  function build() {
+    const m = DATA[n].modes[mode];
+    const byKey = new Map();
+    if (set === "queens") {
+      m.points.forEach((p, i) => {
+        if (!p) return;
+        const k = p.join();
+        if (!byKey.has(k)) byKey.set(k, { p, boards: [] });
+        byKey.get(k).boards.push(i);
+      });
+    } else {
+      for (let i = 0; i < m.rooks.length; i += 3) {
+        const p = [m.rooks[i], m.rooks[i + 1], m.rooks[i + 2]], k = p.join();
+        if (!byKey.has(k)) byKey.set(k, { p, boards: [] });
+        byKey.get(k).boards.push(-1);
+      }
+    }
+    spots = [...byKey.values()];
+    const counts = new Float64Array(NB * NL);
+    let total = 0;
+    for (const s of spots) { counts[cellOf(...s.p)] += s.boards.length; total += s.boards.length; }
+    const mean = total / (NB * NL);
+    heat = Array.from(counts, c => Math.log(Math.max(c, mean / 10) / mean));
+    heatSpan = Math.max(0.05, ...heat.map(Math.abs));
+    colours();
+    sel = null; selBoard = 0;
+  }
+
+  function colours() {
+    const lo = hex(css("--div-lo")), mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
+    cellColors = heat.map(h => {
+      const t = Math.max(-1, Math.min(1, h / heatSpan)), end = t < 0 ? lo : hi, u = Math.abs(t);
+      return mid.map((x, i) => x + (end[i] - x) * u);
+    });
+    const f = v => v >= 10 ? v.toFixed(0) + "×" : v >= 1 ? v.toFixed(1) + "×" : v.toFixed(2) + "×";
+    $("ticks").innerHTML = [Math.exp(-heatSpan), 1, Math.exp(heatSpan)].map(v => `<span>${f(v)}</span>`).join("");
+  }
+
+  // ---------- drawing ----------
+  let off = null;
+  function draw() {
+    if (!DATA) return;
+    const c = $("globe"), r0 = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(r0.width * d)) { c.width = Math.round(r0.width * d); c.height = Math.round(r0.height * d); }
+    const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    const w = r0.width, R = w / 2 - 14, cx = w / 2, cy = w / 2;
+    g.clearRect(0, 0, w, w);
+
+    // the heat surface, drawn per pixel at a modest resolution and scaled up
+    const S = Math.min(360, Math.round(2 * R));
+    if (!off || off.width !== S) { off = document.createElement("canvas"); off.width = off.height = S; }
+    const og = off.getContext("2d"), img = og.createImageData(S, S), px = img.data;
+    for (let j = 0; j < S; j++) {
+      const Y = 1 - 2 * (j + 0.5) / S;
+      for (let i = 0; i < S; i++) {
+        const X = 2 * (i + 0.5) / S - 1, rr = X * X + Y * Y, o = 4 * (j * S + i);
+        if (rr > 1) { px[o + 3] = 0; continue; }
+        const Z = Math.sqrt(1 - rr), col = cellColors[cellOf(...unrotate(X, Y, Z))], shade = 0.82 + 0.18 * Z;
+        px[o] = col[0] * shade; px[o + 1] = col[1] * shade; px[o + 2] = col[2] * shade; px[o + 3] = 255;
+      }
+    }
+    og.putImageData(img, 0, 0);
+    g.imageSmoothingEnabled = true;
+    g.drawImage(off, cx - R, cy - R, 2 * R, 2 * R);
+
+    // a light grid: the equator and a few meridians on the near side
+    g.lineWidth = 1; g.strokeStyle = css("--grid-line");
+    const line = f => {
+      let prev = null;
+      for (let t = 0; t <= 96; t++) {
+        const q = rotate(f(t / 96)), sx = cx + R * q[0], sy = cy - R * q[1];
+        if (prev && q[2] >= 0 && prev[2] >= 0) { g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(sx, sy); g.stroke(); }
+        prev = [sx, sy, q[2]];
+      }
+    };
+    for (const lat of [-60, -30, 0, 30, 60]) {
+      const a = lat * Math.PI / 180;
+      line(t => [Math.cos(a) * Math.cos(2 * Math.PI * t), Math.cos(a) * Math.sin(2 * Math.PI * t), Math.sin(a)]);
+    }
+    for (let lon = 0; lon < 180; lon += 45) {
+      const b = lon * Math.PI / 180;
+      line(t => [Math.cos(b) * Math.cos(2 * Math.PI * t), Math.sin(b) * Math.cos(2 * Math.PI * t), Math.sin(2 * Math.PI * t)]);
+    }
+    g.strokeStyle = css("--rule"); g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
+
+    for (const s of spots) { const q = rotate(s.p); s.x = cx + R * q[0]; s.y = cy - R * q[1]; s.z = q[2]; }
+    if (showDots) {
+      g.fillStyle = css("--dot");
+      for (const s of spots) if (s.z >= 0) {
+        const rad = Math.min(4, 1 + Math.sqrt(s.boards.length) * 0.35);
+        g.beginPath(); g.arc(s.x, s.y, rad, 0, 7); g.fill();
+      }
+    }
+    if (sel && sel.z >= 0) {
+      g.beginPath(); g.arc(sel.x, sel.y, 8, 0, 7); g.lineWidth = 2.5; g.strokeStyle = css("--surface"); g.stroke();
+      g.beginPath(); g.arc(sel.x, sel.y, 8, 0, 7); g.lineWidth = 1.5; g.strokeStyle = css("--ink"); g.stroke();
+    }
+  }
+
+  // ---------- the unrolled map ----------
+  function flatGeom() {
+    const c = $("flat"), r0 = c.getBoundingClientRect();
+    return { c, w: r0.width, h: r0.height, pad: 22 };
+  }
+  const flatXY = (p, G) => {
+    const lon = Math.atan2(p[1], p[0]);
+    return [G.pad + (lon + Math.PI) / (2 * Math.PI) * (G.w - 2 * G.pad), G.pad / 2 + (1 - p[2]) / 2 * (G.h - 1.5 * G.pad)];
+  };
+  function drawFlat() {
+    if (!DATA) return;
+    const G = flatGeom(), d = window.devicePixelRatio || 1;
+    if (G.c.width !== Math.round(G.w * d)) { G.c.width = Math.round(G.w * d); G.c.height = Math.round(G.h * d); }
+    const g = G.c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    g.clearRect(0, 0, G.w, G.h);
+    const x0 = G.pad, x1 = G.w - G.pad, y0 = G.pad / 2, y1 = G.h - G.pad;
+    g.fillStyle = css("--surface"); g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    g.strokeStyle = css("--rule"); g.lineWidth = 1; g.strokeRect(x0 + .5, y0 + .5, x1 - x0 - 1, y1 - y0 - 1);
+    g.strokeStyle = css("--grid-line");
+    for (const L of [-90, 0, 90]) { const x = x0 + (L + 180) / 360 * (x1 - x0); g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); }
+    g.beginPath(); g.moveTo(x0, (y0 + y1) / 2); g.lineTo(x1, (y0 + y1) / 2); g.stroke();
+    g.fillStyle = css("--ink-3"); g.font = `400 11px ${css("--font-data")}`; g.textAlign = "center"; g.textBaseline = "top";
+    for (const L of [-180, -90, 0, 90, 180]) g.fillText(`${L}°`, x0 + (L + 180) / 360 * (x1 - x0), y1 + 5);
+    g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("top", 2, y0 + 6); g.fillText("bottom", 2, y1 - 6);
+    const mid = hex(css("--div-mid")), hi = hex(css("--div-hi"));
+    let most = 1; for (const s of spots) most = Math.max(most, s.boards.length);
+    const size = Math.max(2, Math.min(4, (x1 - x0) / 220));
+    const sorted = spots.slice().sort((a, b) => a.boards.length - b.boards.length);
+    for (const s of sorted) {
+      const [x, y] = flatXY(s.p, G), t = most > 1 ? Math.log(s.boards.length) / Math.log(most) : 1;
+      const u = 0.35 + 0.65 * t;
+      g.fillStyle = `rgb(${mid.map((v, i) => Math.round(v + (hi[i] - v) * u)).join(",")})`;
+      g.fillRect(x - size / 2, y - size / 2, size, size);
+    }
+    if (sel) {
+      const [x, y] = flatXY(sel.p, G);
+      g.beginPath(); g.arc(x, y, 7, 0, 7); g.lineWidth = 2; g.strokeStyle = css("--ink"); g.stroke();
+    }
+  }
+  function pickFlat(ev) {
+    const G = flatGeom(), r = G.c.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    let best = null, bd = 144;
+    for (const s of spots) {
+      const [x, y] = flatXY(s.p, G), d = (x - mx) ** 2 + (y - my) ** 2;
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best;
+  }
+
+  // ---------- figures and detail ----------
+  function figures() {
+    const m = DATA[n].modes[mode], placed = m.points.filter(Boolean).length, Q = DATA[n].boards.length;
+    const wv = m.waves.map(w => `(${w.join(", ")})`).join(" and ");
+    const items = set === "queens" ? [
+      ["Solutions placed", `${placed.toLocaleString()} of ${Q.toLocaleString()}`, placed < Q ? `${Q - placed} have both waves silent` : "every solution has a spot"],
+      ["Distinct spots", m.distinct.toLocaleString(), `random rooks: ${m.distinctRooks.toLocaleString()}`],
+      ["Most solutions on one spot", m.maxStack.toLocaleString(), `random rooks: ${m.maxStackRooks}`],
+      ["Waves", wv, mode === "diagonal" ? "diagonal and anti-diagonal" : "the pair with the most distinct spots"]
+    ] : [
+      ["Random rook placements", (m.rooks.length / 3).toLocaleString(), "one per row and column, diagonals ignored"],
+      ["Distinct spots", m.distinctRooks.toLocaleString(), `queen solutions: ${m.distinct.toLocaleString()}`],
+      ["Most on one spot", m.maxStackRooks.toLocaleString(), `queen solutions: ${m.maxStack}`],
+      ["Waves", wv, "same waves as for the queens"]
+    ];
+    $("figures").innerHTML = items.map(([k, v, r]) =>
+      `<div class="fig"><div class="k">${k}</div><div class="v">${v}</div><div class="r">${r}</div></div>`).join("");
+    $("poles").textContent = `Top: only the wave (${m.waves[0].join(", ")}) sounds. Bottom: only (${m.waves[1].join(", ")}). Equator: both equally loud. The longitude is their phase difference, seen from the centre of the board: 0° means in step.`;
+  }
+
+  function drawBoard(b) {
+    const c = $("d-board"), g = c.getContext("2d"), cell = c.width / n;
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+      g.fillStyle = (r + k) % 2 ? css("--cell-a") : css("--cell-b");
+      g.fillRect(k * cell, r * cell, cell, cell);
+    }
+    g.fillStyle = css("--ink");
+    for (let r = 0; r < n; r++) {
+      g.beginPath(); g.arc((parseInt(b[r], 16) + .5) * cell, (r + .5) * cell, cell * 0.3, 0, 7); g.fill();
+    }
+  }
+
+  function detail() {
+    if (!sel) {
+      $("d-head").textContent = "No spot selected"; $("d-board").hidden = true;
+      $("d-body").textContent = "Hover or tap the sphere to see the solutions at the nearest spot.";
+      $("prev-b").disabled = $("next-b").disabled = true; return;
+    }
+    const k = sel.boards.length, cellHeat = Math.exp(heat[cellOf(...sel.p)]);
+    const what = set === "queens" ? "solution" : "rook placement";
+    $("d-head").textContent = `${k} ${what}${k === 1 ? "" : "s"} on exactly this spot`;
+    const patch = `The patch around it holds ${cellHeat >= 1 ? cellHeat.toFixed(1) + "× the" : "about " + cellHeat.toFixed(2) + "× the"} average.`;
+    if (set === "queens") {
+      $("d-board").hidden = false; drawBoard(DATA[n].boards[sel.boards[selBoard]]);
+      $("d-body").textContent = `Board ${selBoard + 1} of ${k} here (solution ${sel.boards[selBoard] + 1}). ${patch}`;
+      $("prev-b").disabled = selBoard === 0; $("next-b").disabled = selBoard >= k - 1;
+    } else {
+      $("d-board").hidden = true;
+      $("d-body").textContent = `Random rook placements are a baseline; their boards are not stored. ${patch}`;
+      $("prev-b").disabled = $("next-b").disabled = true;
+    }
+  }
+
+  function pick(ev) {
+    const r = $("globe").getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+    let best = null, bd = 196;
+    for (const s of spots) {
+      if (s.z < 0) continue;
+      const d = (s.x - mx) ** 2 + (s.y - my) ** 2;
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best;
+  }
+
+  // ---------- interaction ----------
+  let drag = null;
+  function onDown(ev) { drag = { x: ev.clientX, y: ev.clientY, yaw, pitch, moved: false }; $("globe").setPointerCapture(ev.pointerId); }
+  function onMove(ev) {
+    if (drag) {
+      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; $("globe").classList.add("dragging"); stopSpin(); }
+      if (drag.moved) { yaw = drag.yaw + dx * 0.01; pitch = Math.max(-1.5, Math.min(1.5, drag.pitch + dy * 0.01)); draw(); return; }
+    }
+    if (ev.pointerType === "mouse") {
+      const s = pick(ev);
+      if (s && s !== sel) { sel = s; selBoard = 0; detail(); draw(); drawFlat(); }
+    }
+  }
+  function onUp(ev) {
+    if (drag && !drag.moved) { sel = pick(ev); selBoard = 0; detail(); draw(); drawFlat(); }
+    drag = null; $("globe").classList.remove("dragging");
+  }
+  function stopSpin() { spinning = false; $("spin").textContent = "Turn slowly"; }
+  function tick(t) {
+    if (spinning && DATA) { yaw += Math.min(50, t - last) * 0.00022; draw(); }
+    last = t; requestAnimationFrame(tick);
+  }
+
+  function refresh() {
+    for (const b of $("sizes").children) b.setAttribute("aria-pressed", String(+b.dataset.n === n));
+    for (const b of $("modes").children) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    for (const b of $("sets").children) b.setAttribute("aria-pressed", String(b.dataset.set === set));
+    build(); figures(); detail(); draw(); drawFlat();
+  }
+
+  function init(data) {
+    DATA = data;
+    const sizes = Object.keys(data).map(Number).sort((a, b) => a - b);
+    $("sizes").innerHTML = sizes.map(s => `<button type="button" data-n="${s}" aria-pressed="false">${s}×${s}</button>`).join("");
+    n = sizes.includes(12) ? 12 : sizes[sizes.length - 1];
+    const seg = (id, fn) => $(id).addEventListener("click", ev => { const b = ev.target.closest("button"); if (b) { fn(b); refresh(); } });
+    seg("sizes", b => { n = +b.dataset.n; });
+    seg("modes", b => { mode = b.dataset.mode; });
+    seg("sets", b => { set = b.dataset.set; });
+    $("dots").addEventListener("change", ev => { showDots = ev.target.checked; draw(); });
+    const flat = $("flat");
+    const flatPick = ev => { const s = pickFlat(ev); if (s && s !== sel) { sel = s; selBoard = 0; detail(); draw(); drawFlat(); } };
+    flat.addEventListener("pointermove", ev => { if (ev.pointerType === "mouse") flatPick(ev); });
+    flat.addEventListener("pointerdown", flatPick);
+    const c = $("globe");
+    c.addEventListener("pointerdown", onDown);
+    c.addEventListener("pointermove", onMove);
+    c.addEventListener("pointerup", onUp);
+    c.addEventListener("pointercancel", () => { drag = null; c.classList.remove("dragging"); });
+    $("spin").addEventListener("click", () => { if (spinning) stopSpin(); else { spinning = true; $("spin").textContent = "Pause turning"; } });
+    $("reset").addEventListener("click", () => { yaw = 0.6; pitch = 0.35; draw(); });
+    $("prev-b").addEventListener("click", () => { if (sel && selBoard > 0) { selBoard--; detail(); } });
+    $("next-b").addEventListener("click", () => { if (sel && selBoard < sel.boards.length - 1) { selBoard++; detail(); } });
+    if (!spinning) $("spin").textContent = "Turn slowly";
+    refresh();
+    requestAnimationFrame(tick);
+  }
+
+  new ResizeObserver(() => draw()).observe($("globe"));
+  new ResizeObserver(() => drawFlat()).observe($("flat"));
+  const retheme = () => { if (DATA) { colours(); detail(); draw(); drawFlat(); } };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  fetch("flat_sphere.json")
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      const s = $("status"); s.hidden = false;
+      s.textContent = "Could not load flat_sphere.json. Run flat_sphere.py, then serve this folder (python3 -m http.server) and open the page from there.";
+    });
+})();
+</script>

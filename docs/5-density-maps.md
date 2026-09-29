@@ -292,6 +292,65 @@ at the same n, and classes fitted the same way to random rook placements.
   back, it is in about the same place.
 - Only up to n = 13: the fitting code runs out of memory from n = 14 on.
 
+## A heatmap on a sphere **[single run]**
+
+The density map stacks all solutions on the board squares. Here each solution gets its own spot on
+a sphere instead (`flat_sphere.py`, picture `flat_sphere.html`). Two waves of the board, F(u, v) as in
+[part 2](2-doughnut-board.md), are put through the Hopf map: the height on the sphere is the balance
+between how loud the two waves are, and the longitude is their phase difference. The flat board has
+no shifts, so nothing is folded away (unlike the doughnut sphere in part 2). Random rook placements
+with the same count are the baseline.
+
+```
+ n      solutions   diagonal waves (1,1) and (1,-1)             most spread-out pair of waves
+                    spots    most on one spot   rooks: spots     waves          spots    rooks
+10          724       139          96               696          (1,3) (6,1)      586      696
+11         2680       552         212              2659          (1,2) (8,1)     2479     2661
+12        14200      2464         168             13284          (1,2) (2,5)    12603    12975
+```
+
+- **The diagonal waves pile solutions up.** At n = 12 the 14,200 solutions share only 2,464 spots,
+  with up to 168 on one spot, while random rooks get 13,284 spots with at most 29 on one. The diagonal
+  waves of queen solutions are also quieter (3.1 against 4.9 for rooks at n = 12). So the diagonal
+  rule makes solutions far more alike in these two waves than random boards are. The heat on the
+  sphere shows where they pile up.
+- **Other waves spread them out.** Searching all pairs of waves, the best pair gives 12,603 spots at
+  n = 12, close to the 12,975 for rooks. These waves have no simple meaning, so the picture is harder
+  to read.
+- **Solutions with no spot.** At n = 11, 88 solutions have both diagonal waves silent and get no spot.
+  They are exactly the doughnut solutions: one queen on every wrapped diagonal makes these waves zero
+  (the "quiet lines" of part 2).
+- The turns and mirrors of a solution mostly land on different spots (64% to 89% with the diagonal
+  waves, 96% to 99% with the spread-out pairs).
+
+**What the diagonal sphere looks like.** Phases are measured from the centre of the board, and the
+anti-diagonal wave is F(1, −1), the mirror image of the diagonal wave F(1, 1). (Measured from the
+corner square, every longitude turns by a fixed angle, 30° at n = 12. On an even board F(1, n − 1)
+also differs from F(1, −1) by a sign, which turns every longitude by 180°. So the direction of the
+lean below depends on these choices; its strength does not.)
+
+- **Two mirror halves.** Flipping a board top to bottom turns diagonals into anti-diagonals. On the
+  sphere this swaps top and bottom and keeps the longitude, an exact reflection through the equator,
+  checked for every solution at n = 10 to 12. So the lower half is an exact mirror image of the upper
+  half. A half turn of the board keeps the height and reverses the longitude, and a left-right mirror
+  does both. Seen while the sphere turns, a ring of spots just above the equator and its mirror image
+  just below meet in a figure 8.
+- **A dense side where the two waves are in step.** Queen solutions lean towards longitude 0 (the
+  diagonal and anti-diagonal wave in step, seen from the centre): strength 0.25 at n = 11 and 0.22 at
+  n = 12, with 29% and 23% of solutions within 30° of 0, against 17% for an even spread. Random rooks
+  do not lean (strength at most 0.05). At n = 10 there is no lean (0.01). The symmetry forces the
+  dense side to be at 0° or 180°. That it is at 0° is the finding.
+- **Rows at fixed heights.** Each diagonal wave is a sum of n unit "clock hands", one per queen,
+  pointing in one of n fixed directions set by the queen's diagonal. Queens never share a diagonal, so
+  the hands spread out and mostly cancel, and the sum takes few values: 54 different loudness values of
+  the diagonal wave at n = 12, against 515 for rooks. So the spots sit on few height levels: 311 at
+  n = 12, and the 10 fullest levels hold 35% of the solutions (rooks: 7,863 levels, 4%). The unrolled
+  map on the page shows them as rows. Around the sphere the pattern seems to repeat in steps of about
+  60° at n = 12 (the hands point at multiples of 30°), but a first check was too crude to confirm the
+  spacing. *(That spacing check was a scratch run.)*
+- **[open]** What the solutions piled on one spot have in common, for example whether they are linked
+  by small moves.
+
 ## Counts alone are too few **[argument]**
 
 Only about 27 exact values of Q(n) are known. Fitting a smooth growth law to n = 8 to 15 leaves small,

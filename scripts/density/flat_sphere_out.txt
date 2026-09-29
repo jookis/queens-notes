@@ -1,0 +1,29 @@
+n = 10: 724 solutions
+   diagonal waves (1, 1) and (1, -1): 724 placed, 139 distinct points (rooks 696), most on one point 96 (rooks 4), turns and mirrors on different points 64%, how loud the two waves are 3.01 (rooks 4.50)
+   diagonal waves, how the board's symmetries move a spot:
+      flip top to bottom: top and bottom swap, longitude kept
+      half turn: height kept, longitude reversed
+      mirror left to right: top and bottom swap, longitude reversed
+   phase: longitudes lean towards +0 deg with strength 0.01 (rooks 0.05); within 30 deg of 0: 15% (rooks 14%, even spread 17%)
+   rows: 19 latitude levels, the 10 fullest hold 90% (rooks 536, 10%); loudness values of the diagonal wave 12 (rooks 160)
+   spread   waves (1, 3) and (6, 1): 724 placed, 586 distinct points (rooks 696), most on one point 8 (rooks 8), turns and mirrors on different points 96%, how loud the two waves are 5.10 (rooks 4.50)
+n = 11: 2680 solutions
+   diagonal waves (1, 1) and (1, -1): 2592 placed, 552 distinct points (rooks 2659), most on one point 212 (rooks 4), turns and mirrors on different points 65%, how loud the two waves are 2.84 (rooks 4.68)
+   diagonal waves, how the board's symmetries move a spot:
+      flip top to bottom: top and bottom swap, longitude kept
+      half turn: height kept, longitude reversed
+      mirror left to right: top and bottom swap, longitude reversed
+   phase: longitudes lean towards -0 deg with strength 0.25 (rooks 0.02); within 30 deg of 0: 29% (rooks 16%, even spread 17%)
+   rows: 77 latitude levels, the 10 fullest hold 56% (rooks 2428, 2%); loudness values of the diagonal wave 40 (rooks 864)
+   spread   waves (1, 2) and (8, 1): 2614 placed, 2479 distinct points (rooks 2661), most on one point 11 (rooks 4), turns and mirrors on different points 99%, how loud the two waves are 4.81 (rooks 4.63)
+n = 12: 14200 solutions
+   diagonal waves (1, 1) and (1, -1): 14200 placed, 2464 distinct points (rooks 13284), most on one point 168 (rooks 29), turns and mirrors on different points 89%, how loud the two waves are 3.12 (rooks 4.86)
+   diagonal waves, how the board's symmetries move a spot:
+      flip top to bottom: top and bottom swap, longitude kept
+      half turn: height kept, longitude reversed
+      mirror left to right: top and bottom swap, longitude reversed
+   phase: longitudes lean towards -0 deg with strength 0.22 (rooks 0.00); within 30 deg of 0: 23% (rooks 16%, even spread 17%)
+   rows: 311 latitude levels, the 10 fullest hold 35% (rooks 7863, 4%); loudness values of the diagonal wave 54 (rooks 515)
+   spread   waves (1, 2) and (2, 5): 14200 placed, 12603 distinct points (rooks 12975), most on one point 15 (rooks 39), turns and mirrors on different points 99%, how loud the two waves are 5.07 (rooks 4.79)
+
+wrote flat_sphere.json
