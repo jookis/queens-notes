@@ -345,9 +345,23 @@ lean below depends on these choices; its strength does not.)
   the hands spread out and mostly cancel, and the sum takes few values: 54 different loudness values of
   the diagonal wave at n = 12, against 515 for rooks. So the spots sit on few height levels: 311 at
   n = 12, and the 10 fullest levels hold 35% of the solutions (rooks: 7,863 levels, 4%). The unrolled
-  map on the page shows them as rows. Around the sphere the pattern seems to repeat in steps of about
-  60° at n = 12 (the hands point at multiples of 30°), but a first check was too crude to confirm the
-  spacing. *(That spacing check was a scratch run.)*
+  map on the page shows them as rows.
+- **On even boards the pattern repeats n/2 times around the sphere.** The density map (spots at the
+  poles left out, since they have no longitude) was compared with itself after turning it about the
+  axis by 1/k of a full turn, for k = 2, 3, 4, 5, 6, 10 and 12 (correlation, 1 = identical):
+
+  ```
+   n     best match               other turns              random rooks
+  10     1/5 turn (72°): +0.75    all others -0.02 to +0.07     at most +0.04
+  11     none                     -0.06 to +0.03                at most +0.04
+  12     1/6 turn (60°): +0.83    1/3: +0.72, 1/2: +0.64,       at most +0.07
+                                  1/4: -0.06
+  ```
+
+  So at 12 x 12 there are 6 equal shapes around the sphere, and at 10 x 10 there are 5. At a glance
+  it can look like 4, because a sphere only shows its front half. Each shape above the equator has its
+  exact mirror image below. **[open]** Why the repeat is n/2 on even boards and absent at n = 11; the
+  hands pointing at multiples of 360°/n make some link to n likely, but this is not worked out.
 - **[open]** What the solutions piled on one spot have in common, for example whether they are linked
   by small moves.
 

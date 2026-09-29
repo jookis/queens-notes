@@ -25,6 +25,8 @@ For the diagonal pair also:
             move a spot (checked exactly for every solution)
   phase     how strongly the longitudes lean towards 0 (the two waves in step, seen from the centre)
   rows      how many latitude levels and loudness values of the diagonal wave occur
+  repeats   how strongly the pattern repeats k times around the sphere (k = 1 to 12), and how well the
+            density map matches itself after turning it by 1/k of a full turn about the axis
 
     python3 flat_sphere.py             # n = 10 to 12, about two minutes (the pair search)
     python3 flat_sphere.py 10 11
@@ -102,6 +104,22 @@ def diagonal_extras(S, R, P, PR, ok, okR, index, z1):
     levelsR = collections.Counter(np.round(PR[okR, 2], 6))
     top = sum(v for _, v in levels.most_common(10)) / ok.sum()
     topR = sum(v for _, v in levelsR.most_common(10)) / okR.sum()
+    def dens(X, NB=24, NL=120):                      # longitude in 3-degree slices
+        b = np.clip(((X[:, 2] + 1) / 2 * NB).astype(int), 0, NB - 1)
+        l = np.clip(((np.arctan2(X[:, 1], X[:, 0]) + np.pi) / (2 * np.pi) * NL).astype(int), 0, NL - 1)
+        D = np.zeros((NB, NL)); np.add.at(D, (b, l), 1)
+        return D
+    # spots at the poles (only one wave sounds) have no longitude, so they are left out here
+    Xq, Xr = P[ok & (abs(P[:, 2]) < 0.999)], PR[okR & (abs(PR[:, 2]) < 0.999)]
+    print(f"   repeats: {ok.sum() - len(Xq)} queen solutions and {okR.sum() - len(Xr)} rook placements sit at a pole")
+    for name, X in (("queens", Xq), ("rooks", Xr)):
+        phi = np.arctan2(X[:, 1], X[:, 0])
+        k_fold = " ".join(f"{abs(np.exp(1j * k * phi).mean()):.2f}" for k in range(1, 13))
+        D = dens(X)
+        turned = ", ".join(f"1/{k} turn: {np.corrcoef(D.ravel(), np.roll(D, 120 // k, axis=1).ravel())[0, 1]:+.2f}"
+                           for k in (2, 3, 4, 5, 6, 10, 12))
+        print(f"   repeats, {name}: k = 1..12 around the sphere: {k_fold}")
+        print(f"      density map against itself turned by {turned}")
     zR = wave(R, 1, 1)
     print(f"   rows: {len(levels)} latitude levels, the 10 fullest hold {100 * top:.0f}% "
           f"(rooks {len(levelsR)}, {100 * topR:.0f}%); loudness values of the diagonal wave "
