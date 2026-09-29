@@ -65,6 +65,8 @@ C programs: `cc -O2 -o prog prog.c`. Rust programs: `rustc -O prog.rs`.
 | `solution_plane.py [lo hi]` | one dot per solution family (multidimensional scaling of queen differences), against random rooks; writes `solution_plane.json` for `solution_plane.html` (serve the folder with `python3 -m http.server` to view) | n = 8 to 12: ~45 s |
 | `solution_moves.py [lo hi]` | moves of 2, 3 and 4 queens between solutions: connected groups, flexibility map, shortest paths; writes `solution_moves.json` for `solution_moves.html` | n = 8 to 12: ~10 s |
 | `corner_room.py` | why corner queens move more often: open squares per queen, and for swaps the partner's return square, corner vs inside; reads `solution_moves.json` | seconds |
+| `classes_vs_moves.py` | the 4 learned classes of `aligned_heat.py` against the moves: how flexible each class is, and how many moves stay inside a class; reads `solution_moves.json` | ~1 min |
+| `classes_across_n.py` | do the 4 classes come back at other sizes: class maps of n = 10 to 13 compared with turns (and shifts), against random-rook classes | ~10 min |
 | `queens_semi_heat.c` | `queens_semi_heat <n> <mode> > semi_heat_<n>_<mode>.txt`: mode 1 semi-queens (one diagonal family), mode 2 ordinary queens | |
 
 `run_19_20.txt` is the console output of the n = 19 and 20 runs.

@@ -244,6 +244,54 @@ with m open squares can swap with probability 1 − (1 − p)^m.)
   (1.2x with moves of up to 4 queens), and other moving queens can free or block a diagonal, so the
   simple rule no longer holds exactly.
 
+## The 4 classes and the web **[single run]**
+
+`classes_vs_moves.py` compares the 4 learned classes from "Turning boards before stacking" with the
+moves from `solution_moves.json`, for n = 11 and 12.
+
+- **The classes are not the flexible kind or the corner kind.** Every class is about equally
+  flexible: 8.0 to 8.4 of the 12 queens can take part in a move of up to 4 queens at n = 12 (6.3 to
+  6.8 of 11 at n = 11). The share of solutions with a queen on a corner square does differ between
+  classes (5% to 18% at n = 12), but not in a stable way. At n = 11 a different class stands out (28%)
+  while the others are near 10%.
+- **Moves stay inside a class about twice as often as chance.** At n = 12, 75% of the 2-, 3- and
+  4-queen moves join two solutions of the same class, against 35% for random classes of the same sizes.
+  At n = 11 it is 66% against 26%. Two other random starts of the class fit give 63% to 69%, again
+  about twice chance.
+- This is largely expected. A move changes only 2 to 4 queens, so neighbouring solutions look alike,
+  and any grouping by where the queens sit tends to keep them together. What it adds is how the
+  earlier results fit together: the solutions form one connected web, and the 4 classes are cuts of
+  that web into 4 regions that keep neighbours together. The web has no natural seams, so each fit
+  cuts it in a different place. That is why the classes were unstable between runs, even though each
+  one follows the web.
+
+**Do the classes come back at other sizes?** `classes_across_n.py` fits the 4 classes three times for
+n = 10 to 13 and compares the class maps, scaled to the unit square. Classes are matched one to one,
+and each class may take its own turn or mirror. A score of 1 means identical maps. Baselines: two fits
+at the same n, and classes fitted the same way to random rook placements.
+
+```
+ n     two fits at the same n    n vs n+1    queens vs random-rook classes
+10            0.35                 0.21
+11            0.31                 0.31
+12            0.38                 0.41                  0.22
+13            0.41                                       0.21
+ random rooks, two fits at n = 12: 0.18
+```
+
+- The classes come back at the next size about as well as they repeat at the same size (n = 12 vs 13:
+  0.41, against 0.38 for two fits at n = 12). That is about twice the rook baseline, so the
+  resemblance is real, but it is loose. It is a similar rough layout, not the same sharp pattern.
+- It does not break as the board grows. The match improves a little from n = 10 to 13.
+- The class sizes do not carry over. The largest class holds 39% to 51% of the solutions at n = 12,
+  depending on the fit.
+- **Not in another place.** When each class may also shift by up to a quarter of the board, all scores
+  jump (n = 12 vs 13: 0.72), but two fits on random rooks then also match at 0.72. With that much
+  freedom the search finds a good match even in noise, so it cannot tell a pattern that moved from a
+  coincidence. Nothing points to the classes reappearing somewhere else on the board. Where they come
+  back, it is in about the same place.
+- Only up to n = 13: the fitting code runs out of memory from n = 14 on.
+
 ## Counts alone are too few **[argument]**
 
 Only about 27 exact values of Q(n) are known. Fitting a smooth growth law to n = 8 to 15 leaves small,
