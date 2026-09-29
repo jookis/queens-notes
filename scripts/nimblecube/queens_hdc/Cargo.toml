@@ -1,0 +1,13 @@
+[package]
+name = "queens_hdc"
+version = "0.1.0"
+edition = "2021"
+description = "12x12 queen solutions as Nimblecube hypervectors: distance preservation and neighbour recall"
+
+# Uses the nimblecube-core library from the Nimblecube project, expected in a folder next to this repo
+# (../nimblecube, seen from the repo root).
+[dependencies]
+nimblecube-core = { path = "../../../../nimblecube/nimblecube-core" }
+
+[profile.release]
+opt-level = 3

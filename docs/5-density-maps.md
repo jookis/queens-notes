@@ -417,6 +417,43 @@ the same sizes:
   two swaps can cancel each other's effect on the diagonal waves and keep both boards on one spot,
   which a rotation of four rarely does. *(Scratch run, not in a repo script.)*
 
+## The solutions as Nimblecube hypervectors **[single run]**
+
+A cross-over with the author's other project, **Nimblecube**: an integer-only similarity memory that
+stores patterns as 4096-bit "hypervectors" and compares them by Hamming distance (XOR and a count, the
+same trick as the board check in [part 1](1-flat-board.md)). The queen solutions make a fully known test
+set for it: for every pair of 12 x 12 solutions we know exactly how they differ, and which ones are
+small-move neighbours (differ in 2 to 4 queens). `scripts/nimblecube/queens_hdc` encodes all 14,200
+solutions with Nimblecube's own library (`nimblecube-core`, used from a `nimblecube` folder next to this
+repo) and asks two things: does the distance between codes follow the difference between the boards,
+and is the nearest code a real small-move neighbour?
+
+Two encodings: Nimblecube's `FeatureEncoder` (one channel per row, the queen's column as a "graceful"
+level, so that neighbouring columns get similar codes), and for comparison an unrelated random code for
+every square, bundled with Nimblecube's majority vote.
+
+```
+                                         FeatureEncoder    random code per square
+ rank correlation of code distance with:
+   how many queens differ                    +0.46               +0.94
+   how far the queens moved (columns)        +0.98               +0.42
+ for the 13,856 solutions with a small-move neighbour:
+   nearest code is a real neighbour          61.7%              100%
+   a real neighbour in the 10 nearest        87.7%              100%
+   (a random guess hits one 0.03% of the time)
+```
+
+- **Each encoding measures a different kind of "similar".** The graceful levels make the code distance
+  follow how far the queens moved, almost perfectly (0.98). That is what they are built for: in sensor
+  data, 41 is close to 42. But in the puzzle, two queens swapping across the board is a small move,
+  while several queens each shifting one column is not. So the nearest `FeatureEncoder` code is a real
+  neighbour only 62% of the time, although that is still about 2,000 times better than chance.
+- **Unrelated codes per square count differing queens**, and then recall is perfect. The code distance
+  grows in clean steps: 694 bits for 2 differing queens, 1,026 for 4, 1,947 for all 12.
+- For Nimblecube this suggests that the level encoding decides which kind of similarity the memory
+  finds: graceful levels for measured quantities, unrelated codes for categories and positions. One
+  seed at one board size; it tests the encodings on known data, not Nimblecube on real sensors.
+
 ## Counts alone are too few **[argument]**
 
 Only about 27 exact values of Q(n) are known. Fitting a smooth growth law to n = 8 to 15 leaves small,

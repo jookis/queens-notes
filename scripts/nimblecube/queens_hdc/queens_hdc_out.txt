@@ -1,0 +1,23 @@
+12 x 12: 14200 solutions; codes of 4096 bits
+
+== FeatureEncoder (graceful column levels) ==
+distance between codes vs the boards (200,000 random pairs; rank correlation, 1 = same order):
+   vs how many queens differ:  +0.464
+   vs how far the queens moved: +0.983
+average distance between codes (of 4096 bits), by queens that differ: 2: 362  3: 514  4: 642  6: 865  8: 1072  10: 1257  12: 1433  
+solutions with at least one small-move neighbour: 13856 of 14200
+   nearest code is a real small-move neighbour: 61.7%   (ranking by queens that differ: 100%)
+   a real neighbour among the 10 nearest codes: 87.7%
+   share of real neighbours found in the 10 nearest (up to 10 each): 45.2%
+   by chance, a random other solution is a neighbour with probability 0.031%
+
+== comparison: a random code for every square ==
+distance between codes vs the boards (200,000 random pairs; rank correlation, 1 = same order):
+   vs how many queens differ:  +0.939
+   vs how far the queens moved: +0.422
+average distance between codes (of 4096 bits), by queens that differ: 2: 694  3: 873  4: 1026  6: 1288  8: 1521  10: 1737  12: 1947  
+solutions with at least one small-move neighbour: 13856 of 14200
+   nearest code is a real small-move neighbour: 100.0%   (ranking by queens that differ: 100%)
+   a real neighbour among the 10 nearest codes: 100.0%
+   share of real neighbours found in the 10 nearest (up to 10 each): 100.0%
+   by chance, a random other solution is a neighbour with probability 0.031%

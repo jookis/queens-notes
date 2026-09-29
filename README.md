@@ -44,7 +44,8 @@ Each finding carries one of these labels:
 4. [Higher dimensions](docs/4-higher-dimensions.md): when a clean solution exists in d dimensions
    (a known theorem), with a short proof for the linear case and a direct construction.
 5. [Density maps](docs/5-density-maps.md): exact per-square occupancy for boards up to 20 x 20, and how
-   one queen's position affects the rest of the board.
+   one queen's position affects the rest of the board. Also the solutions laid out in a plane and on a
+   sphere, the web of small moves between them, and a test of the author's Nimblecube project on them.
 6. [A chessboard lock](docs/6-lock-build.md): a hobby hardware idea.
 
 [References](docs/references.md) lists the papers and sources used.

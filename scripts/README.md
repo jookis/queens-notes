@@ -86,3 +86,13 @@ C programs: `cc -O2 -o prog prog.c`. Rust programs: `rustc -O prog.rs`.
 | `queens_topbot_residual.py` | how much of the top-bottom link the direct rules explain |
 
 The data files are included (coin tables n = 8 to 19, top-bottom tables to 18), so the Python scripts run without redoing the enumeration.
+
+## nimblecube/ (part 5)
+
+Uses **Nimblecube**, the author's integer-only hypervector similarity memory (a separate project). Needs
+Rust and a checkout of the `nimblecube` repo in a folder next to this one (`../nimblecube`), since
+`nimblecube-core` is used from there by path.
+
+| program | what it does | runtime |
+|---|---|---|
+| `queens_hdc/` (`cargo run --release`) | encodes the 14,200 12x12 solutions with Nimblecube's `FeatureEncoder` and with a random code per square; distance preservation and small-move neighbour recall. Output in `queens_hdc_out.txt` | ~30 s |
